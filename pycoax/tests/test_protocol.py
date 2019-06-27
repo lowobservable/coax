@@ -36,6 +36,20 @@ class ExecuteReadCommandTestCase(unittest.TestCase):
         # Act and assert
         self.assertEqual(_execute_read_command(self.interface, Command.READ_TERMINAL_ID), bytes.fromhex('00'))
 
+    def test_allow_trta_response(self):
+        # Arrange
+        self.interface.execute = Mock(return_value=[0b0000000000])
+
+        # Act and assert
+        self.assertEqual(_execute_read_command(self.interface, Command.POLL, allow_trta_response=True, trta_value='TRTA'), 'TRTA')
+
+    def test_disable_unpack_data_words(self):
+        # Arrange
+        self.interface.execute = Mock(return_value=[0b1111111110])
+
+        # Act and assert
+        self.assertEqual(_execute_read_command(self.interface, Command.POLL, unpack_data_words=False), [0b1111111110])
+
     def test_unexpected_response_length(self):
         # Arrange
         self.interface.execute = Mock(return_value=[])
@@ -63,7 +77,7 @@ class ExecuteWriteCommandTestCase(unittest.TestCase):
         with self.assertRaisesRegex(ProtocolError, 'Expected 1 word WRITE_DATA response'):
             _execute_write_command(self.interface, Command.WRITE_DATA, bytes.fromhex('de ad be ef'))
 
-    def test_not_tr_ta_response(self):
+    def test_not_trta_response(self):
         # Arrange
         self.interface.execute = Mock(return_value=[0b0000000010])
 

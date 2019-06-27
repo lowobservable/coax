@@ -87,17 +87,13 @@ class TerminalId:
 
 def poll(interface, **kwargs):
     """Execute a POLL command."""
-    command_word = _pack_command_word(Command.POLL)
+    response = _execute_read_command(interface, Command.POLL, allow_trta_response=True,
+                                     unpack_data_words=False, **kwargs)
 
-    response = interface.execute(command_word, **kwargs)
-
-    if len(response) != 1:
-        raise ProtocolError('Expected 1 word POLL response')
+    if response is None:
+        return None
 
     word = response[0]
-
-    if word == 0:
-        return None
 
     if PollResponse.is_power_on_reset_complete(word):
         return PowerOnResetCompletePollResponse(word)
@@ -193,27 +189,32 @@ def diagnostic_reset(interface):
     """Execute a DIAGNOSTIC_RESET command."""
     raise NotImplementedError
 
-def _execute_read_command(interface, command, response_length=1):
+def _execute_read_command(interface, command, response_length=1,
+                          allow_trta_response=False, trta_value=None,
+                          unpack_data_words=True, **kwargs):
     """Execute a standard read command."""
     command_word = _pack_command_word(command)
 
-    response_words = interface.execute(command_word, response_length=response_length)
+    response = interface.execute(command_word, response_length=response_length)
 
-    if len(response_words) != response_length:
+    if allow_trta_response and len(response) == 1 and response[0] == 0:
+        return trta_value
+
+    if len(response) != response_length:
         raise ProtocolError(f'Expected {response_length} word {command.name} response')
 
-    return _unpack_data_words(response_words)
+    return _unpack_data_words(response) if unpack_data_words else response
 
 def _execute_write_command(interface, command, data=None):
     """Execute a standard write command."""
     command_word = _pack_command_word(command)
 
-    response_words = interface.execute(command_word, data)
+    response = interface.execute(command_word, data)
 
-    if len(response_words) != 1:
+    if len(response) != 1:
         raise ProtocolError(f'Expected 1 word {command.name} response')
 
-    if response_words[0] != 0:
+    if response[0] != 0:
         raise ProtocolError('Expected TR/TA response')
 
 def _pack_command_word(command, address=0):
