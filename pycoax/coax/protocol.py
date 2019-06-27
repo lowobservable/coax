@@ -119,7 +119,8 @@ def read_terminal_id(interface, **kwargs):
 
 def read_extended_id(interface, **kwargs):
     """Execute a READ_EXTENDED_ID command."""
-    return _execute_read_command(interface, Command.READ_EXTENDED_ID, 4, **kwargs)
+    return _execute_read_command(interface, Command.READ_EXTENDED_ID, 4,
+                                 allow_trta_response=True, **kwargs)
 
 def read_address_counter_hi(interface, **kwargs):
     """Execute a READ_ADDRESS_COUNTER_HI command."""
