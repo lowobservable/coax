@@ -1,0 +1,2 @@
+pyserial==3.4
+sliplib==0.3.0
