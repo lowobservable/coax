@@ -196,7 +196,7 @@ def _execute_read_command(interface, command, response_length=1,
     """Execute a standard read command."""
     command_word = _pack_command_word(command)
 
-    response = interface.execute(command_word, response_length=response_length)
+    response = interface.execute(command_word, response_length=response_length, **kwargs)
 
     if allow_trta_response and len(response) == 1 and response[0] == 0:
         return trta_value
@@ -206,11 +206,11 @@ def _execute_read_command(interface, command, response_length=1,
 
     return _unpack_data_words(response) if unpack_data_words else response
 
-def _execute_write_command(interface, command, data=None):
+def _execute_write_command(interface, command, data=None, **kwargs):
     """Execute a standard write command."""
     command_word = _pack_command_word(command)
 
-    response = interface.execute(command_word, data)
+    response = interface.execute(command_word, data, **kwargs)
 
     if len(response) != 1:
         raise ProtocolError(f'Expected 1 word {command.name} response')

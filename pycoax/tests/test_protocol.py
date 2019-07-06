@@ -58,6 +58,16 @@ class ExecuteReadCommandTestCase(unittest.TestCase):
         with self.assertRaisesRegex(ProtocolError, 'Expected 1 word READ_TERMINAL_ID response'):
             _execute_read_command(self.interface, Command.READ_TERMINAL_ID)
 
+    def test_timeout_is_passed_to_interface(self):
+        # Arrange
+        self.interface.execute = Mock(return_value=[0b0000000010])
+
+        # Act
+        _execute_read_command(self.interface, Command.READ_TERMINAL_ID, timeout=10)
+
+        # Assert
+        self.assertEqual(self.interface.execute.call_args[1].get('timeout'), 10)
+
 class ExecuteWriteCommandTestCase(unittest.TestCase):
     def setUp(self):
         self.interface = Mock()
@@ -84,6 +94,16 @@ class ExecuteWriteCommandTestCase(unittest.TestCase):
         # Act and assert
         with self.assertRaisesRegex(ProtocolError, 'Expected TR/TA response'):
             _execute_write_command(self.interface, Command.WRITE_DATA, bytes.fromhex('de ad be ef'))
+
+    def test_timeout_is_passed_to_interface(self):
+        # Arrange
+        self.interface.execute = Mock(return_value=[0b0000000000])
+
+        # Assert
+        _execute_write_command(self.interface, Command.WRITE_DATA, bytes.fromhex('de ad be ef'), timeout=10)
+
+        # Assert
+        self.assertEqual(self.interface.execute.call_args[1].get('timeout'), 10)
 
 class PackCommandWordTestCase(unittest.TestCase):
     def test_without_address(self):
