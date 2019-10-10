@@ -1,6 +1,6 @@
 EESchema-DOCLIB  Version 2.0
 #
-$CMP xxxx
+$CMP PE5762
 D xxxx
 K pulse
 F https://productfinder.pulseeng.com/products/datasheets/P663.pdf

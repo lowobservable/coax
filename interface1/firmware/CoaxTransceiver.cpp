@@ -21,46 +21,46 @@
 //  Arduino   Arduino Port        Label        DP8340N   DP8341N 
 //    Pin       and Mask                         Pin       Pin
 // ---------|--------------|-----------------|---------|---------
+//     7    |              | EVEN/ODD PARITY |   18    |
+//     6    |   PH3 0x08   | PARITY CONTROL  |   19    |
+//     5    |              | AUTO RESPONSE   |   21    |
+//     4    |   PG5 0x20   | REGISTERS FULL  |   22    |
+//     3    |   PE5 0x20   | REGISTER LOAD   |   23    |
+// ---------.--------------.-----------------.---------.---------
+//     2    |              | DATA CONTROL    |         |    5
+//    14    |   PJ1 0x02   | ERROR           |         |    8
+//    15    |   PJ0 0x01   | DATA AVAILABLE  |         |   10
+//    16    |   PH1 0x02   | REGISTER READ   |         |    9
+//    17    |   PH0 0x01   | OUTPUT CONTROL  |         |   11
+//    18*   |   PD3 0x08   | RECEIVER ACTIVE |         |    7
+//    19    |   PD2 0x04   | OUTPUT ENABLE   |         |   13
+// ---------.--------------.-----------------.---------.---------
+//    22    |   PA0        | D11             |    1    |   23
+//    23    |   PA1        | D10             |    2    |   22
+//    24    |   PA2        | D9              |    3    |   21
+//    25    |   PA3        | D8              |    4    |   20
+//    26    |   PA4        | D7              |    5    |   19
+//    27    |   PA5        | D6              |    6    |   18
+//    28    |   PA6        | D5              |    7    |   17
+//    29    |   PA7        | D4              |    8    |   16
 //    36    |   PC1        | D2              |   10    |   14
 //    37    |   PC0        | D3              |    9    |   15
-//    29    |   PA7        | D4              |    8    |   16
-//    28    |   PA6        | D5              |    7    |   17
-//    27    |   PA5        | D6              |    6    |   18
-//    26    |   PA4        | D7              |    5    |   19
-//    25    |   PA3        | D8              |    4    |   20
-//    24    |   PA2        | D9              |    3    |   21
-//    23    |   PA1        | D10             |    2    |   22
-//    22    |   PA0        | D11             |    1    |   23
-// --------- -------------- ----------------- --------- ---------
-//     8    |   PH5 0x20   | REGISTER LOAD   |   23    |
-//     9    |   PH6 0x40   | REGISTERS FULL  |   22    |
-//    10    |              | AUTO RESPONSE   |   21    |
-//    11    |              | EVEN/ODD PARITY |   18    |
-//    12    |   PB6 0x40   | PARITY CONTROL  |   19    |
-// --------- -------------- ----------------- --------- ---------
-//    18*   |   PD3 0x08   | RECEIVER ACTIVE |         |    7
-//     2    |   PE4 0x10   | DATA AVAILABLE  |         |   10
-//     3    |   PE5 0x20   | ERROR           |         |    8
-//     4    |              | DATA CONTROL    |         |    5
-//     5    |   PE3 0x08   | REGISTER READ   |         |    9
-//     6    |   PH3 0x08   | OUTPUT CONTROL  |         |   11
-//     7    |   PH4 0x10   | OUTPUT ENABLE   |         |   13
 //
 // * - Interrupt capable pin
 
-#define TX_REGISTER_LOAD_PIN 8
-#define TX_REGISTERS_FULL_PIN 9
-#define TX_AUTO_RESPONSE_PIN 10
-#define TX_EVEN_ODD_PARITY_PIN 11
-#define TX_PARITY_CONTROL_PIN 12
+#define TX_EVEN_ODD_PARITY_PIN 7
+#define TX_PARITY_CONTROL_PIN 6
+#define TX_AUTO_RESPONSE_PIN 5
+#define TX_REGISTERS_FULL_PIN 4
+#define TX_REGISTER_LOAD_PIN 3
 
+#define RX_DATA_CONTROL_PIN 2
+#define RX_ERROR_PIN 14
+#define RX_DATA_AVAILABLE_PIN 15
+#define RX_REGISTER_READ_PIN 16
+#define RX_OUTPUT_CONTROL_PIN 17
 #define RX_ACTIVE_PIN 18
-#define RX_DATA_AVAILABLE_PIN 2
-#define RX_ERROR_PIN 3
-#define RX_DATA_CONTROL_PIN 4
-#define RX_REGISTER_READ_PIN 5
-#define RX_OUTPUT_CONTROL_PIN 6
-#define RX_OUTPUT_ENABLE_PIN 7
+#define RX_OUTPUT_ENABLE_PIN 19
 
 #define RX_STATE_DISABLED 0
 #define RX_STATE_WAITING 1
@@ -164,7 +164,7 @@ static int /* ssize_t */ CoaxTransceiver::transmit(uint16_t commandWord, uint8_t
     return ERROR_TX_RECEIVER_ACTIVE;
   }
   
-  if ((PIND & 0x8) == 0x8) {
+  if (/* RECEIVER ACTIVE */ (PIND & 0x8) == 0x8) {
     return ERROR_TX_RECEIVER_ACTIVE;
   }
 
@@ -172,7 +172,7 @@ static int /* ssize_t */ CoaxTransceiver::transmit(uint16_t commandWord, uint8_t
   noInterrupts();
 
   // Disable receiver output.
-  PORTH &= ~0x10; // RX Output Enable - Low (Disable)
+  PORTD &= ~0x04; // RX Output Enable - Low (Disable)
 
   // Configure data bus for output.
   DDRA = B11111111;
@@ -182,17 +182,17 @@ static int /* ssize_t */ CoaxTransceiver::transmit(uint16_t commandWord, uint8_t
   PORTC = (PINC & 0xfc) | ((commandWord >> 8) & 0x3);
   PORTA = commandWord & 0xff;
 
-  PORTH &= ~0x20; // TX Register Load - Low (Load)
-  PORTH |=  0x20; // TX Register Load - High
+  PORTE &= ~0x20; // TX Register Load - Low (Load)
+  PORTE |=  0x20; // TX Register Load - High
 
   // Send data - offload parity computation to DP8340.
   if (dataCount > 0) {
     // Enable transmitter parity calculation.
-    PORTB &= ~0x40; // TX Parity Control - Low
+    PORTH &= ~0x08; // TX Parity Control - Low
     
     for (int index = 0; index < dataCount; index++) {
       // Wait while TX Registers Full is high.
-      while ((PINH & 0x40) == 0x40) {
+      while ( (PING & 0x20) == 0x20) {
         NOP;
       }
       
@@ -201,12 +201,12 @@ static int /* ssize_t */ CoaxTransceiver::transmit(uint16_t commandWord, uint8_t
       PORTC = (PINC & 0xfc) | ((data >> 6) & 0x3);
       PORTA = (data << 2);
 
-      PORTH &= ~0x20; // TX Register Load - Low (Load)
-      PORTH |=  0x20; // TX Register Load - High
+      PORTE &= ~0x20; // TX Register Load - Low (Load)
+      PORTE |=  0x20; // TX Register Load - High
     }
 
     // Disable transmitter parity calculation.
-    PORTB |= 0x40; // TX Parity Control - High
+    PORTH |= 0x08; // TX Parity Control - High
   }
 
   // Configure data bus for input.
@@ -214,7 +214,7 @@ static int /* ssize_t */ CoaxTransceiver::transmit(uint16_t commandWord, uint8_t
   DDRC = B00000000;
 
   // Enable receiver output.
-  PORTH |= 0x10; // RX Output Enable - High (Enable)
+  PORTD |= 0x04; // RX Output Enable - High (Enable)
 
   // Enable interrupts.
   interrupts();
@@ -262,30 +262,30 @@ static void CoaxTransceiver::rxActiveInterrupt() {
   rxBufferCount = 0;
 
   do {
-    while ((PINE & 0x30) == 0) {
+    while (/* ERROR or DATA AVAILABLE */ (PINJ & 0x03) == 0) {
       NOP;
     }
     
-    if (/* ERROR */ (PINE & 0x20) == 0x20) {
-      mask = 0x20;
+    if (/* ERROR */ (PINJ & 0x02) == 0x02) {
+      mask = 0x02;
             
-      PORTH &= ~0x8; // Output Control - Low (Error)
-      PORTE &= ~0x8; // Register Read - Low
+      PORTH &= ~0x01; // Output Control - Low (Error)
+      PORTH &= ~0x02; // Register Read - Low
 
       // Read and mark as error.
       data = (((PINC & 0x3) | 0x80) << 8) | PINA;
 
-      PORTE |= 0x8; // Register Read - High
-      PORTH |= 0x8; // Output Control - High (Data)
-    } else if (/* DATA AVAILABLE */ (PINE & 0x10) == 0x10) {
-      mask = 0x10;
+      PORTH |= 0x02; // Register Read - High
+      PORTH |= 0x01; // Output Control - High (Data)
+    } else if (/* DATA AVAILABLE */ (PINJ & 0x01) == 0x01) {
+      mask = 0x01;
       
-      PORTE &= ~0x8; // Register Read - Low
+      PORTH &= ~0x02; // Register Read - Low
 
       // Read.
       data = ((PINC & 0x3) << 8) | PINA;
      
-      PORTE |= 0x8; // Register Read - High
+      PORTH |= 0x02; // Register Read - High
     }
     
     if (rxBufferCount >= rxBufferSize) {
@@ -295,10 +295,10 @@ static void CoaxTransceiver::rxActiveInterrupt() {
     
     rxBuffer[rxBufferCount++] = data;
 
-    while ((PINE & mask) == mask) {
+    while ((PINJ & mask) == mask) {
       NOP;
     }
-  } while ((PIND & 0x8) == 0x8);
+  } while (/* RECEIVER ACTIVE */ (PIND & 0x8) == 0x8);
 
 EXIT:
   rxState = RX_STATE_RECEIVED;

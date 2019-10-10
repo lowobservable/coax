@@ -1,3 +1,4 @@
 (sym_lib_table
+  (lib (name arduino)(type Legacy)(uri /home/andrew/downloads/arduino-kicad-library/arduino.lib)(options "")(descr ""))
   (lib (name library)(type Legacy)(uri ${KIPRJMOD}/library.lib)(options "")(descr ""))
 )
