@@ -4,7 +4,7 @@ from unittest.mock import Mock
 import context
 
 from coax import PollResponse, KeystrokePollResponse, ProtocolError
-from coax.protocol import Command, _execute_read_command, _execute_write_command, _pack_command_word, _unpack_data_words, _unpack_data_word
+from coax.protocol import Command, TerminalId, _execute_read_command, _execute_write_command, _pack_command_word, _unpack_data_words, _unpack_data_word
 
 class PollResponseTestCase(unittest.TestCase):
     def test_is_power_on_reset_complete(self):
@@ -24,6 +24,35 @@ class KeystrokePollResponseTestCase(unittest.TestCase):
     def test_not_a_keystroke(self):
         with self.assertRaisesRegex(ValueError, 'Invalid keystroke poll response'):
             response = KeystrokePollResponse(0b0000001000)
+
+class TerminalIdTestCase(unittest.TestCase):
+    def test_model_2(self):
+        terminal_id = TerminalId(0b00000100)
+
+        self.assertEqual(terminal_id.model, 2)
+
+    def test_model_3(self):
+        terminal_id = TerminalId(0b00000110)
+
+        self.assertEqual(terminal_id.model, 3)
+
+    def test_model_4(self):
+        terminal_id = TerminalId(0b00001110)
+
+        self.assertEqual(terminal_id.model, 4)
+
+    def test_model_5(self):
+        terminal_id = TerminalId(0b00001100)
+
+        self.assertEqual(terminal_id.model, 5)
+
+    def test_invalid_identifier(self):
+        with self.assertRaisesRegex(ValueError, 'Invalid terminal identifier'):
+            terminal_id = TerminalId(0b00000001)
+
+    def test_invalid_model(self):
+        with self.assertRaisesRegex(ValueError, 'Invalid model'):
+            terminal_id = TerminalId(0b00000000)
 
 class ExecuteReadCommandTestCase(unittest.TestCase):
     def setUp(self):

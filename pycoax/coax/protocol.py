@@ -76,14 +76,29 @@ class KeystrokePollResponse(PollResponse):
 class TerminalId:
     """Terminal model and keyboard."""
 
+    _MODEL_MAP = {
+        0b010: 2,
+        0b011: 3,
+        0b111: 4,
+        0b110: 5
+    }
+
     def __init__(self, value):
         if (value & 0x1) != 0:
             raise ValueError('Invalid terminal identifier')
 
         self.value = value
 
-        self.model = (value & 0x0e) >> 1
+        model = (value & 0x0e) >> 1
+
+        if model not in TerminalId._MODEL_MAP:
+            raise ValueError('Invalid model')
+
+        self.model = TerminalId._MODEL_MAP[model]
         self.keyboard = (value & 0xf0) >> 4
+
+    def __repr__(self):
+        return f'<TerminalId model={self.model}, keyboard={self.keyboard}>'
 
 def poll(interface, **kwargs):
     """Execute a POLL command."""
