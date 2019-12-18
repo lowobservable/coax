@@ -156,7 +156,7 @@ class UnpackDataWordTestCase(unittest.TestCase):
     
     def test_parity_error(self):
         with self.assertRaisesRegex(ProtocolError, 'Parity error'):
-            _unpack_data_word(0b0000000000)
+            _unpack_data_word(0b0000000000, check_parity=True)
 
 if __name__ == '__main__':
     unittest.main()

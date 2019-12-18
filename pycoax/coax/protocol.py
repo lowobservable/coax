@@ -237,19 +237,19 @@ def _pack_command_word(command, address=0):
     """Pack a command and address into a 10-bit command word for the interface."""
     return (address << 7) | (command.value << 2) | 0x1
 
-def _unpack_data_words(words):
-    """Unpack the data bytes from 10-bit data words, performs parity checking."""
-    return bytes([_unpack_data_word(word) for word in words])
+def _unpack_data_words(words, check_parity=False):
+    """Unpack the data bytes from 10-bit data words."""
+    return bytes([_unpack_data_word(word, check_parity=check_parity) for word in words])
 
-def _unpack_data_word(word):
-    """Unpack the data byte from a 10-bit data word, performs parity checking."""
-    if not (word & 0x1) == 0x0:
+def _unpack_data_word(word, check_parity=False):
+    """Unpack the data byte from a 10-bit data word."""
+    if (word & 0x1) != 0:
         raise ProtocolError('Word does not have data bit set')
 
     byte = (word >> 2) & 0xff
     parity = (word >> 1) & 0x1
 
-    if not odd_parity(byte) == parity:
+    if check_parity and parity != odd_parity(byte):
         raise ProtocolError('Parity error')
 
     return byte
