@@ -73,6 +73,22 @@ class KeystrokePollResponse(PollResponse):
 
         self.scan_code = (value >> 2) & 0xff
 
+class Status:
+    """Terminal status."""
+
+    def __init__(self, value):
+        self.value = value
+
+        self.monocase = bool(value & 0x80)
+        self.busy = not bool(value & 0x20)
+        self.feature_error = bool(value & 0x04)
+        self.operation_complete = bool(value & 0x02)
+
+    def __repr__(self):
+        return (f'<Status monocase={self.monocase}, busy={self.busy}, '
+                f'feature_error={self.feature_error}, '
+                f'operation_complete={self.operation_complete}>')
+
 class TerminalId:
     """Terminal model and keyboard."""
 
@@ -122,9 +138,11 @@ def poll_ack(interface, **kwargs):
     """Execute a POLL_ACK command."""
     _execute_write_command(interface, Command.POLL_ACK, **kwargs)
 
-def read_status(interface):
+def read_status(interface, **kwargs):
     """Execute a READ_STATUS command."""
-    raise NotImplementedError
+    response = _execute_read_command(interface, Command.READ_STATUS, **kwargs)
+
+    return Status(response[0])
 
 def read_terminal_id(interface, **kwargs):
     """Execute a READ_TERMINAL_ID command."""

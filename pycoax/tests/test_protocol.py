@@ -4,7 +4,7 @@ from unittest.mock import Mock
 import context
 
 from coax import PollResponse, KeystrokePollResponse, ProtocolError
-from coax.protocol import Command, TerminalId, _execute_read_command, _execute_write_command, _pack_command_word, _unpack_data_words, _unpack_data_word
+from coax.protocol import Command, Status, TerminalId, _execute_read_command, _execute_write_command, _pack_command_word, _unpack_data_words, _unpack_data_word
 
 class PollResponseTestCase(unittest.TestCase):
     def test_is_power_on_reset_complete(self):
@@ -24,6 +24,15 @@ class KeystrokePollResponseTestCase(unittest.TestCase):
     def test_not_a_keystroke(self):
         with self.assertRaisesRegex(ValueError, 'Invalid keystroke poll response'):
             response = KeystrokePollResponse(0b0000001000)
+
+class StatusTestCase(unittest.TestCase):
+    def test(self):
+        status = Status(0b10000110)
+
+        self.assertTrue(status.monocase)
+        self.assertTrue(status.busy)
+        self.assertTrue(status.feature_error)
+        self.assertTrue(status.operation_complete)
 
 class TerminalIdTestCase(unittest.TestCase):
     def test_model_2(self):
