@@ -37,6 +37,14 @@ class Command(Enum):
     START_OPERATION = 0x08
     DIAGNOSTIC_RESET = 0x1c
 
+class PollAction(Enum):
+    """Terminal POLL action."""
+
+    NONE = 0x0
+    ALARM = 0x2
+    ENABLE_KEYBOARD_CLICKER = 0x3
+    DISABLE_KEYBOARD_CLICKER = 0x1
+
 class PollResponse:
     """Terminal POLL response."""
 
@@ -116,9 +124,9 @@ class TerminalId:
     def __repr__(self):
         return f'<TerminalId model={self.model}, keyboard={self.keyboard}>'
 
-def poll(interface, **kwargs):
+def poll(interface, action=PollAction.NONE, **kwargs):
     """Execute a POLL command."""
-    command_word = _pack_command_word(Command.POLL)
+    command_word = (action.value << 8) | _pack_command_word(Command.POLL)
 
     response = _execute_read_command(interface, command_word, allow_trta_response=True,
                                      unpack_data_words=False, **kwargs)
