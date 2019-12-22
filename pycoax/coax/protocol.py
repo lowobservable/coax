@@ -152,6 +152,19 @@ class Control:
                 f'cursor_reverse={self.cursor_reverse}, '
                 f'cursor_blink={self.cursor_blink}>')
 
+class SecondaryControl:
+    """Terminal secondary control register."""
+
+    def __init__(self, big=False):
+        self.big = big
+
+    @property
+    def value(self):
+        return bool(self.big) | 0
+
+    def __repr__(self):
+        return f'<SecondaryControl big={self.big}>'
+
 def poll(interface, action=PollAction.NONE, **kwargs):
     """Execute a POLL command."""
     command_word = (action.value << 8) | _pack_command_word(Command.POLL)
@@ -233,9 +246,11 @@ def load_control_register(interface, control, **kwargs):
 
     _execute_write_command(interface, command_word, bytes([control.value]), **kwargs)
 
-def load_secondary_control(interface):
+def load_secondary_control(interface, control, **kwargs):
     """Execute a LOAD_SECONDARY_CONTROL command."""
-    raise NotImplementedError
+    command_word = _pack_command_word(Command.LOAD_SECONDARY_CONTROL)
+
+    _execute_write_command(interface, command_word, bytes([control.value]), **kwargs)
 
 def load_mask(interface):
     """Execute a LOAD_MASK command."""

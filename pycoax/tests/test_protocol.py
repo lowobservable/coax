@@ -4,7 +4,7 @@ from unittest.mock import Mock
 import context
 
 from coax import PollResponse, KeystrokePollResponse, ProtocolError
-from coax.protocol import Command, Status, TerminalId, Control, _execute_read_command, _execute_write_command, _pack_command_word, _unpack_command_word, _unpack_data_words, _unpack_data_word
+from coax.protocol import Command, Status, TerminalId, Control, SecondaryControl, _execute_read_command, _execute_write_command, _pack_command_word, _unpack_command_word, _unpack_data_words, _unpack_data_word
 
 class PollResponseTestCase(unittest.TestCase):
     def test_is_power_on_reset_complete(self):
@@ -86,6 +86,12 @@ class ControlTestCase(unittest.TestCase):
 
     def test_cursor_blink(self):
         control = Control(cursor_blink=True)
+
+        self.assertEqual(control.value, 0b00000001)
+
+class SecondaryControlTestCase(unittest.TestCase):
+    def test_big(self):
+        control = SecondaryControl(big=True)
 
         self.assertEqual(control.value, 0b00000001)
 
