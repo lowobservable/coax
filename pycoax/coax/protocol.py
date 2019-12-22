@@ -213,9 +213,11 @@ def read_address_counter_lo(interface, **kwargs):
 
     return _execute_read_command(interface, command_word, **kwargs)[0]
 
-def read_data(interface):
+def read_data(interface, **kwargs):
     """Execute a READ_DATA command."""
-    raise NotImplementedError
+    command_word = _pack_command_word(Command.READ_DATA)
+
+    return _execute_read_command(interface, command_word, **kwargs)
 
 def read_multiple(interface):
     """Execute a READ_MULTIPLE command."""
