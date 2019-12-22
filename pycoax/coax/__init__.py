@@ -7,6 +7,7 @@ from .protocol import (
     PollResponse,
     PowerOnResetCompletePollResponse,
     KeystrokePollResponse,
+    Control,
     poll,
     poll_ack,
     read_status,

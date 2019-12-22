@@ -124,6 +124,34 @@ class TerminalId:
     def __repr__(self):
         return f'<TerminalId model={self.model}, keyboard={self.keyboard}>'
 
+class Control:
+    """Terminal control register."""
+
+    def __init__(self, step_inhibit=False, display_inhibit=False, cursor_inhibit=False,
+                 cursor_reverse=False, cursor_blink=False):
+        self.step_inhibit = step_inhibit
+        self.display_inhibit = display_inhibit
+        self.cursor_inhibit = cursor_inhibit
+        self.cursor_reverse = cursor_reverse
+        self.cursor_blink = cursor_blink
+
+    @property
+    def value(self):
+        value = bool(self.step_inhibit) << 4
+        value |= bool(self.display_inhibit) << 3
+        value |= bool(self.cursor_inhibit) << 2
+        value |= bool(self.cursor_reverse) << 1
+        value |= bool(self.cursor_blink)
+
+        return value
+
+    def __repr__(self):
+        return (f'<Control step_inhibit={self.step_inhibit}>, '
+                f'display_inhibit={self.display_inhibit}, '
+                f'cursor_inhibit={self.cursor_inhibit}, '
+                f'cursor_reverse={self.cursor_reverse}, '
+                f'cursor_blink={self.cursor_blink}>')
+
 def poll(interface, action=PollAction.NONE, **kwargs):
     """Execute a POLL command."""
     command_word = (action.value << 8) | _pack_command_word(Command.POLL)
@@ -197,9 +225,11 @@ def reset(interface):
     """Execute a RESET command."""
     raise NotImplementedError
 
-def load_control_register(interface):
+def load_control_register(interface, control, **kwargs):
     """Execute a LOAD_CONTROL_REGISTER command."""
-    raise NotImplementedError
+    command_word = _pack_command_word(Command.LOAD_CONTROL_REGISTER)
+
+    _execute_write_command(interface, command_word, bytes([control.value]), **kwargs)
 
 def load_secondary_control(interface):
     """Execute a LOAD_SECONDARY_CONTROL command."""

@@ -4,7 +4,7 @@ from unittest.mock import Mock
 import context
 
 from coax import PollResponse, KeystrokePollResponse, ProtocolError
-from coax.protocol import Command, Status, TerminalId, _execute_read_command, _execute_write_command, _pack_command_word, _unpack_command_word, _unpack_data_words, _unpack_data_word
+from coax.protocol import Command, Status, TerminalId, Control, _execute_read_command, _execute_write_command, _pack_command_word, _unpack_command_word, _unpack_data_words, _unpack_data_word
 
 class PollResponseTestCase(unittest.TestCase):
     def test_is_power_on_reset_complete(self):
@@ -62,6 +62,32 @@ class TerminalIdTestCase(unittest.TestCase):
     def test_invalid_model(self):
         with self.assertRaisesRegex(ValueError, 'Invalid model'):
             terminal_id = TerminalId(0b00000000)
+
+class ControlTestCase(unittest.TestCase):
+    def test_step_inhibit(self):
+        control = Control(step_inhibit=True)
+
+        self.assertEqual(control.value, 0b00010000)
+
+    def test_display_inhibit(self):
+        control = Control(display_inhibit=True)
+
+        self.assertEqual(control.value, 0b00001000)
+
+    def test_cursor_inhibit(self):
+        control = Control(cursor_inhibit=True)
+
+        self.assertEqual(control.value, 0b00000100)
+
+    def test_cursor_reverse(self):
+        control = Control(cursor_reverse=True)
+
+        self.assertEqual(control.value, 0b00000010)
+
+    def test_cursor_blink(self):
+        control = Control(cursor_blink=True)
+
+        self.assertEqual(control.value, 0b00000001)
 
 class ExecuteReadCommandTestCase(unittest.TestCase):
     def setUp(self):
