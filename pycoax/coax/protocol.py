@@ -232,9 +232,12 @@ def read_data(interface, **kwargs):
 
     return _execute_read_command(interface, command_word, **kwargs)
 
-def read_multiple(interface):
+def read_multiple(interface, **kwargs):
     """Execute a READ_MULTIPLE command."""
-    raise NotImplementedError
+    command_word = _pack_command_word(Command.READ_MULTIPLE)
+
+    return _execute_read_command(interface, command_word, 32,
+                                 validate_response_length=False, **kwargs)
 
 def reset(interface):
     """Execute a RESET command."""
@@ -299,15 +302,15 @@ def diagnostic_reset(interface):
     raise NotImplementedError
 
 def _execute_read_command(interface, command_word, response_length=1,
-                          allow_trta_response=False, trta_value=None,
-                          unpack_data_words=True, **kwargs):
+                          validate_response_length=True, allow_trta_response=False,
+                          trta_value=None, unpack_data_words=True, **kwargs):
     """Execute a standard read command."""
     response = interface.execute(command_word, response_length=response_length, **kwargs)
 
     if allow_trta_response and len(response) == 1 and response[0] == 0:
         return trta_value
 
-    if len(response) != response_length:
+    if validate_response_length and len(response) != response_length:
         (_, command) = _unpack_command_word(command_word)
 
         raise ProtocolError(f'Expected {response_length} word {command.name} response')
