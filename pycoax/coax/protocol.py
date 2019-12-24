@@ -257,9 +257,11 @@ def load_secondary_control(interface, control, **kwargs):
 
     _execute_write_command(interface, command_word, bytes([control.value]), **kwargs)
 
-def load_mask(interface):
+def load_mask(interface, mask, **kwargs):
     """Execute a LOAD_MASK command."""
-    raise NotImplementedError
+    command_word = _pack_command_word(Command.LOAD_MASK)
+
+    _execute_write_command(interface, command_word, bytes([mask]), **kwargs)
 
 def load_address_counter_hi(interface, address, **kwargs):
     """Execute a LOAD_ADDRESS_COUNTER_HI command."""
@@ -283,13 +285,17 @@ def clear(interface):
     """Execute a CLEAR command."""
     raise NotImplementedError
 
-def search_forward(interface):
+def search_forward(interface, pattern, **kwargs):
     """Execute a SEARCH_FORWARD command."""
-    raise NotImplementedError
+    command_word = _pack_command_word(Command.SEARCH_FORWARD)
 
-def search_backward(interface):
+    _execute_write_command(interface, command_word, bytes([pattern]), **kwargs)
+
+def search_backward(interface, pattern, **kwargs):
     """Execute a SEARCH_BACKWARD command."""
-    raise NotImplementedError
+    command_word = _pack_command_word(Command.SEARCH_BACKWARD)
+
+    _execute_write_command(interface, command_word, bytes([pattern]), **kwargs)
 
 def insert_byte(interface):
     """Execute a INSERT_BYTE command."""
