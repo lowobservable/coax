@@ -281,9 +281,11 @@ def write_data(interface, data, **kwargs):
 
     _execute_write_command(interface, command_word, data, **kwargs)
 
-def clear(interface):
+def clear(interface, pattern, **kwargs):
     """Execute a CLEAR command."""
-    raise NotImplementedError
+    command_word = _pack_command_word(Command.CLEAR)
+
+    _execute_write_command(interface, command_word, bytes([pattern]), **kwargs)
 
 def search_forward(interface, pattern, **kwargs):
     """Execute a SEARCH_FORWARD command."""
