@@ -239,9 +239,11 @@ def read_multiple(interface, **kwargs):
     return _execute_read_command(interface, command_word, 32,
                                  validate_response_length=False, **kwargs)
 
-def reset(interface):
+def reset(interface, **kwargs):
     """Execute a RESET command."""
-    raise NotImplementedError
+    command_word = _pack_command_word(Command.RESET)
+
+    _execute_write_command(interface, command_word, **kwargs)
 
 def load_control_register(interface, control, **kwargs):
     """Execute a LOAD_CONTROL_REGISTER command."""
