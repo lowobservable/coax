@@ -297,9 +297,11 @@ def search_backward(interface, pattern, **kwargs):
 
     _execute_write_command(interface, command_word, bytes([pattern]), **kwargs)
 
-def insert_byte(interface):
+def insert_byte(interface, byte, **kwargs):
     """Execute a INSERT_BYTE command."""
-    raise NotImplementedError
+    command_word = _pack_command_word(Command.INSERT_BYTE)
+
+    _execute_write_command(interface, command_word, bytes([byte]), **kwargs)
 
 def start_operation(interface):
     """Execute a START_OPERATION command."""
