@@ -1,0 +1,6 @@
+set_io --warn-no-port tx B8
+
+# 16MHz clock
+set_io --warn-no-port clk B2
+
+set_io --warn-no-port usb_pu A3
