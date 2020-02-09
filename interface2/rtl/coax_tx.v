@@ -22,14 +22,17 @@ module coax_tx (
     localparam SYNC_BIT = 11;
     localparam DATA = 12;
     localparam PARITY_BIT = 13;
+    localparam END_1 = 14;
+    localparam END_2 = 15;
+    localparam END_3 = 16;
 
     reg [$clog2(CLOCKS_PER_BIT):0] bit_counter = 0;
 
     wire bit_strobe;
     wire bit_first_half;
 
-    reg [3:0] state = IDLE;
-    reg [3:0] next_state;
+    reg [4:0] state = IDLE;
+    reg [4:0] next_state;
 
     reg [9:0] data;
     reg [3:0] data_counter;
@@ -54,7 +57,10 @@ module coax_tx (
                 CODE_VIOLATION_3: next_state <= SYNC_BIT;
                 SYNC_BIT: next_state <= DATA;
                 DATA: next_state <= data_counter == 9 ? PARITY_BIT : DATA;
-                PARITY_BIT: next_state <= IDLE;
+                PARITY_BIT: next_state <= END_1;
+                END_1: next_state <= END_2;
+                END_2: next_state <= END_3;
+                END_3: next_state <= IDLE;
             endcase
         end
     end
@@ -118,6 +124,10 @@ module coax_tx (
             tx <= bit_first_half ? ~data[9] : data[9];
         else if (state == PARITY_BIT)
             tx <= bit_first_half ? ~parity_bit : parity_bit;
+        else if (state == END_1)
+            tx <= bit_first_half ? 1 : 0;
+        else if (state == END_2 || state == END_3)
+            tx <= 1;
     end
 
     assign active = (state != IDLE);
