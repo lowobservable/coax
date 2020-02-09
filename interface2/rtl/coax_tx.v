@@ -65,6 +65,7 @@ module coax_tx (
         begin
             data <= 10'b0000000101;
 
+            // TODO: Remove BIT_ALIGN state... reset the counter here!
             state <= BIT_ALIGN;
         end
         else 
