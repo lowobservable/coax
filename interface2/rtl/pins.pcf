@@ -1,4 +1,5 @@
 set_io --warn-no-port tx B8
+set_io --warn-no-port tx_active A9
 
 # 16MHz clock
 set_io --warn-no-port clk B2

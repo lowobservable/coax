@@ -3,6 +3,7 @@
 module top (
     input clk,
     output tx,
+    output tx_active,
     output usb_pu
 );
     wire coax_clk;
@@ -25,8 +26,21 @@ module top (
 
     coax_tx coax_tx (
         .clk(coax_clk),
-        .tx(tx)
+        .xxx(do_it),
+        .tx(tx),
+        .active(tx_active)
     );
+
+    wire do_it;
+
+    assign do_it = (counter == 16'b1111_1111_1111_1111);
+
+    reg [15:0] counter = 0;
+
+    always @(posedge coax_clk)
+    begin
+        counter <= counter + 1;
+    end
 
     assign usb_pu = 0;
 endmodule
