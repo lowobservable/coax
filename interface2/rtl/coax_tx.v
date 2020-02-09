@@ -16,6 +16,10 @@ module coax_tx (
     localparam LINE_QUIESCE_4 = 5;
     localparam LINE_QUIESCE_5 = 6;
     localparam LINE_QUIESCE_6 = 7;
+    localparam CODE_VIOLATION_1 = 8;
+    localparam CODE_VIOLATION_2 = 9;
+    localparam CODE_VIOLATION_3 = 10;
+    localparam SYNC_BIT = 11;
 
     reg [$clog2(CLOCKS_PER_BIT):0] bit_counter = 0;
 
@@ -40,7 +44,11 @@ module coax_tx (
                 LINE_QUIESCE_3: next_state <= LINE_QUIESCE_4;
                 LINE_QUIESCE_4: next_state <= LINE_QUIESCE_5;
                 LINE_QUIESCE_5: next_state <= LINE_QUIESCE_6;
-                LINE_QUIESCE_6: next_state <= IDLE;
+                LINE_QUIESCE_6: next_state <= CODE_VIOLATION_1;
+                CODE_VIOLATION_1: next_state <= CODE_VIOLATION_2;
+                CODE_VIOLATION_2: next_state <= CODE_VIOLATION_3;
+                CODE_VIOLATION_3: next_state <= SYNC_BIT;
+                SYNC_BIT: next_state <= IDLE;
             endcase
         end
     end
@@ -69,6 +77,14 @@ module coax_tx (
         tx <= 0;
 
         if (state >= LINE_QUIESCE_1 && state <= LINE_QUIESCE_6)
+            tx <= bit_first_half ? 0 : 1;
+        else if (state == CODE_VIOLATION_1)
+            tx <= 0;
+        else if (state == CODE_VIOLATION_2)
+            tx <= bit_first_half ? 0 : 1;
+        else if (state == CODE_VIOLATION_3)
+            tx <= 1;
+        else if (state == SYNC_BIT)
             tx <= bit_first_half ? 0 : 1;
     end
 
