@@ -5,8 +5,6 @@ module coax_tx_tb();
 
     initial
     begin
-        clk <= 1'h0;
-
         forever
         begin
             #1 clk <= ~clk;
@@ -14,10 +12,16 @@ module coax_tx_tb();
     end
 
     wire tx;
+    wire active;
+    reg xxx = 0;
 
-    coax_tx dut (
+    coax_tx #(
+        .CLOCKS_PER_BIT(8)
+    ) dut (
         .clk(clk),
-        .tx(tx)
+        .xxx(xxx),
+        .tx(tx),
+        .active(active)
     );
 
     initial
@@ -25,7 +29,12 @@ module coax_tx_tb();
         $dumpfile("coax_tx_tb.vcd");
         $dumpvars(0, coax_tx_tb);
 
-        repeat(100) @(posedge clk);
+        repeat(10) @(posedge clk);
+
+        xxx = 1;
+        #8 xxx = 0;
+
+        repeat(1000) @(posedge clk);
 
         $finish;
     end

@@ -3,7 +3,7 @@
 module coax_tx (
     input clk,
     input xxx,
-    output tx,
+    output reg tx, // ??? why does thie have to be reg?
     output active
 );
     parameter CLOCKS_PER_BIT = 8;
@@ -20,16 +20,18 @@ module coax_tx (
     localparam CODE_VIOLATION_2 = 9;
     localparam CODE_VIOLATION_3 = 10;
     localparam SYNC_BIT = 11;
+    localparam DATA = 12;
 
     reg [$clog2(CLOCKS_PER_BIT):0] bit_counter = 0;
 
     wire bit_strobe;
     wire bit_first_half;
 
-    reg [3:0] state;
+    reg [3:0] state = IDLE;
     reg [3:0] next_state;
 
-    reg bit = 0;
+    reg [9:0] data;
+    reg [3:0] data_counter;
 
     always @(*)
     begin
@@ -48,7 +50,8 @@ module coax_tx (
                 CODE_VIOLATION_1: next_state <= CODE_VIOLATION_2;
                 CODE_VIOLATION_2: next_state <= CODE_VIOLATION_3;
                 CODE_VIOLATION_3: next_state <= SYNC_BIT;
-                SYNC_BIT: next_state <= IDLE;
+                SYNC_BIT: next_state <= DATA;
+                DATA: next_state <= data_counter == 9 ? IDLE : DATA;
             endcase
         end
     end
@@ -56,9 +59,24 @@ module coax_tx (
     always @(posedge clk)
     begin
         if (xxx)
+        begin
+            data <= 10'b0000000101;
+
             state <= BIT_ALIGN;
+        end
         else 
             state <= next_state;
+
+        if (state == DATA)
+        begin
+            if (bit_strobe)
+            begin
+                data <= { data[8:0], 1'b0 };
+                data_counter <= data_counter + 1;
+            end
+        end
+        else
+            data_counter <= 0;
     end
 
     always @(posedge clk)
@@ -69,10 +87,10 @@ module coax_tx (
             bit_counter <= bit_counter + 1;
     end
 
-    assign bit_strobe = (bit_counter == 7);
+    assign bit_strobe = (bit_counter == CLOCKS_PER_BIT - 1);
     assign bit_first_half = (bit_counter < CLOCKS_PER_BIT / 2);
 
-    always @(*)
+    always @(*) // ??? is this best?
     begin
         tx <= 0;
 
@@ -86,6 +104,8 @@ module coax_tx (
             tx <= 1;
         else if (state == SYNC_BIT)
             tx <= bit_first_half ? 0 : 1;
+        else if (state == DATA)
+            tx <= bit_first_half ? ~data[9] : data[9];
     end
 
     assign active = (state != IDLE);
