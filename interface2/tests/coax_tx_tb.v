@@ -11,15 +11,17 @@ module coax_tx_tb();
         end
     end
 
+    reg load = 0;
+    reg [9:0] data;
     wire tx;
     wire active;
-    reg xxx = 0;
 
     coax_tx #(
         .CLOCKS_PER_BIT(8)
     ) dut (
         .clk(clk),
-        .xxx(xxx),
+        .load(load),
+        .data(data),
         .tx(tx),
         .active(active)
     );
@@ -31,8 +33,9 @@ module coax_tx_tb();
 
         repeat(10) @(posedge clk);
 
-        xxx = 1;
-        #8 xxx = 0;
+        data = 10'b0000000101;
+        load = 1;
+        #8 load = 0;
 
         repeat(1000) @(posedge clk);
 

@@ -2,7 +2,8 @@
 
 module coax_tx (
     input clk,
-    input xxx,
+    input load,
+    input [9:0] data,
     output active,
     output reg tx, // ??? why does thie have to be reg?
     output tx_delay,
@@ -35,8 +36,8 @@ module coax_tx (
     reg [4:0] state = IDLE;
     reg [4:0] next_state;
 
-    reg [9:0] data;
-    reg [3:0] data_counter;
+    reg [9:0] output_data;
+    reg [3:0] output_data_counter;
     reg parity_bit;
 
     reg [1:0] tx_delay_reg;
@@ -58,7 +59,7 @@ module coax_tx (
                 CODE_VIOLATION_2: next_state <= CODE_VIOLATION_3;
                 CODE_VIOLATION_3: next_state <= SYNC_BIT;
                 SYNC_BIT: next_state <= DATA;
-                DATA: next_state <= data_counter == 9 ? PARITY_BIT : DATA;
+                DATA: next_state <= output_data_counter == 9 ? PARITY_BIT : DATA;
                 PARITY_BIT: next_state <= END_1;
                 END_1: next_state <= END_2;
                 END_2: next_state <= END_3;
@@ -67,42 +68,47 @@ module coax_tx (
         end
     end
 
-    always @(posedge clk)
-    begin
-        if (xxx)
-        begin
-            data <= 10'b0000000101;
-            bit_counter <= 0; // ??? is this ok to do this here with other block below?
-
-            state <= LINE_QUIESCE_1;
-        end
-        else 
-            state <= next_state;
-
-        if (state == DATA)
-        begin
-            if (bit_strobe)
-            begin
-                data <= { data[8:0], 1'b0 };
-                data_counter <= data_counter + 1;
-
-                if (data[9])
-                    parity_bit <= ~parity_bit;
-            end
-        end
-        else
-        begin
-            data_counter <= 0;
-            parity_bit <= 1; // Even parity includes sync bit
-        end
-    end
+    reg previous_load = 0;
 
     always @(posedge clk)
     begin
+        state <= next_state;
+
         if (bit_counter == CLOCKS_PER_BIT - 1)
             bit_counter <= 0;
         else
             bit_counter <= bit_counter + 1;
+
+        if (load && !previous_load)
+        begin
+            if (state == IDLE)
+            begin
+                output_data <= data;
+                bit_counter <= 0;
+
+                // Let's go!
+                state <= LINE_QUIESCE_1;
+            end
+        end
+
+        previous_load <= load;
+
+        if (state == SYNC_BIT)
+        begin
+            output_data_counter <= 0;
+            parity_bit <= 1; // Even parity includes sync bit
+        end
+        else if (state == DATA)
+        begin
+            if (bit_strobe)
+            begin
+                output_data <= { output_data[8:0], 1'b0 };
+                output_data_counter <= output_data_counter + 1;
+
+                if (output_data[9])
+                    parity_bit <= ~parity_bit;
+            end
+        end
     end
 
     assign bit_strobe = (bit_counter == CLOCKS_PER_BIT - 1);
@@ -134,7 +140,7 @@ module coax_tx (
         else if (state == SYNC_BIT)
             tx <= bit_first_half ? 0 : 1;
         else if (state == DATA)
-            tx <= bit_first_half ? ~data[9] : data[9];
+            tx <= bit_first_half ? ~output_data[9] : output_data[9];
         else if (state == PARITY_BIT)
             tx <= bit_first_half ? ~parity_bit : parity_bit;
         else if (state == END_1)

@@ -26,18 +26,20 @@ module top (
         .PLLOUTCORE(clk_19mhz)
     );
 
+    wire load;
+    reg [9:0] data = 10'b0000000101;
+
     coax_tx coax_tx (
         .clk(clk_19mhz),
-        .xxx(do_it),
+        .load(load),
+        .data(data),
         .active(tx_active),
         .tx(tx),
         .tx_delay(tx_delay),
         .tx_inverted(tx_inverted)
     );
 
-    wire do_it;
-
-    assign do_it = (counter == 16'b1111_1111_1111_1111);
+    assign load = (counter == 16'b1111_1111_1111_1111);
 
     reg [15:0] counter = 0;
 
