@@ -3,9 +3,10 @@
 module coax_tx (
     input clk,
     input xxx,
-    output reg tx, // ??? why does thie have to be reg?
     output active,
-    output tx_delay
+    output reg tx, // ??? why does thie have to be reg?
+    output tx_delay,
+    output tx_inverted
 );
     parameter CLOCKS_PER_BIT = 8;
 
@@ -116,6 +117,8 @@ module coax_tx (
             tx_delay_reg <= { tx_delay_reg[0], tx };
     end
 
+    assign active = ((state == LINE_QUIESCE_1 && !bit_first_half) || state > LINE_QUIESCE_1);
+
     always @(*) // ??? is this best?
     begin
         tx <= 0;
@@ -140,7 +143,6 @@ module coax_tx (
             tx <= 1;
     end
 
-    assign active = ((state == LINE_QUIESCE_1 && !bit_first_half) || state > LINE_QUIESCE_1);
-
     assign tx_delay = active ? tx_delay_reg[1] : 0;
+    assign tx_inverted = active ? ~tx : 0;
 endmodule

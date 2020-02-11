@@ -2,8 +2,10 @@
 
 module top (
     input clk_16mhz,
-    output tx,
     output tx_active,
+    output tx,
+    output tx_delay,
+    output tx_inverted,
     output usb_pu
 );
     // 19 MHz
@@ -27,8 +29,10 @@ module top (
     coax_tx coax_tx (
         .clk(clk_19mhz),
         .xxx(do_it),
+        .active(tx_active),
         .tx(tx),
-        .active(tx_active)
+        .tx_delay(tx_delay),
+        .tx_inverted(tx_inverted)
     );
 
     wire do_it;
