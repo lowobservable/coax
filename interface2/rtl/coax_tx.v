@@ -9,22 +9,21 @@ module coax_tx (
     parameter CLOCKS_PER_BIT = 8;
 
     localparam IDLE = 0;
-    localparam BIT_ALIGN = 1;
-    localparam LINE_QUIESCE_1 = 2;
-    localparam LINE_QUIESCE_2 = 3;
-    localparam LINE_QUIESCE_3 = 4;
-    localparam LINE_QUIESCE_4 = 5;
-    localparam LINE_QUIESCE_5 = 6;
-    localparam LINE_QUIESCE_6 = 7;
-    localparam CODE_VIOLATION_1 = 8;
-    localparam CODE_VIOLATION_2 = 9;
-    localparam CODE_VIOLATION_3 = 10;
-    localparam SYNC_BIT = 11;
-    localparam DATA = 12;
-    localparam PARITY_BIT = 13;
-    localparam END_1 = 14;
-    localparam END_2 = 15;
-    localparam END_3 = 16;
+    localparam LINE_QUIESCE_1 = 1;
+    localparam LINE_QUIESCE_2 = 2;
+    localparam LINE_QUIESCE_3 = 3;
+    localparam LINE_QUIESCE_4 = 4;
+    localparam LINE_QUIESCE_5 = 5;
+    localparam LINE_QUIESCE_6 = 6;
+    localparam CODE_VIOLATION_1 = 7;
+    localparam CODE_VIOLATION_2 = 8;
+    localparam CODE_VIOLATION_3 = 9;
+    localparam SYNC_BIT = 10;
+    localparam DATA = 11;
+    localparam PARITY_BIT = 12;
+    localparam END_1 = 13;
+    localparam END_2 = 14;
+    localparam END_3 = 15;
 
     reg [$clog2(CLOCKS_PER_BIT):0] bit_counter = 0;
 
@@ -45,7 +44,6 @@ module coax_tx (
         if (bit_strobe)
         begin
             case (state)
-                BIT_ALIGN: next_state <= LINE_QUIESCE_1;
                 LINE_QUIESCE_1: next_state <= LINE_QUIESCE_2;
                 LINE_QUIESCE_2: next_state <= LINE_QUIESCE_3;
                 LINE_QUIESCE_3: next_state <= LINE_QUIESCE_4;
@@ -70,9 +68,9 @@ module coax_tx (
         if (xxx)
         begin
             data <= 10'b0000000101;
+            bit_counter <= 0; // ??? is this ok to do this here with other block below?
 
-            // TODO: Remove BIT_ALIGN state... reset the counter here!
-            state <= BIT_ALIGN;
+            state <= LINE_QUIESCE_1;
         end
         else 
             state <= next_state;
@@ -130,5 +128,5 @@ module coax_tx (
             tx <= 1;
     end
 
-    assign active = (state != IDLE);
+    assign active = ((state == LINE_QUIESCE_1 && !bit_first_half) || state > LINE_QUIESCE_1);
 endmodule
