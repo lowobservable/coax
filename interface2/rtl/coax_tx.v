@@ -4,7 +4,8 @@ module coax_tx (
     input clk,
     input xxx,
     output reg tx, // ??? why does thie have to be reg?
-    output active
+    output active,
+    output tx_delay
 );
     parameter CLOCKS_PER_BIT = 8;
 
@@ -36,6 +37,8 @@ module coax_tx (
     reg [9:0] data;
     reg [3:0] data_counter;
     reg parity_bit;
+
+    reg [1:0] tx_delay_reg;
 
     always @(*)
     begin
@@ -104,6 +107,15 @@ module coax_tx (
     assign bit_strobe = (bit_counter == CLOCKS_PER_BIT - 1);
     assign bit_first_half = (bit_counter < CLOCKS_PER_BIT / 2);
 
+    always @(posedge clk)
+    begin
+        // The delayed output is "stretched" to go high when active.
+        if (!active)
+            tx_delay_reg <= 2'b11;
+        else
+            tx_delay_reg <= { tx_delay_reg[0], tx };
+    end
+
     always @(*) // ??? is this best?
     begin
         tx <= 0;
@@ -129,4 +141,6 @@ module coax_tx (
     end
 
     assign active = ((state == LINE_QUIESCE_1 && !bit_first_half) || state > LINE_QUIESCE_1);
+
+    assign tx_delay = active ? tx_delay_reg[1] : 0;
 endmodule
