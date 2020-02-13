@@ -26,27 +26,13 @@ module top (
         .PLLOUTCORE(clk_19mhz)
     );
 
-    wire load;
-    reg [9:0] data = 10'b0000000101;
-
-    coax_tx coax_tx (
+    hello_world hello_world (
         .clk(clk_19mhz),
-        .load(load),
-        .data(data),
-        .active(tx_active),
+        .tx_active(tx_active),
         .tx(tx),
         .tx_delay(tx_delay),
         .tx_inverted(tx_inverted)
     );
-
-    assign load = (counter == 16'b1111_1111_1111_1111);
-
-    reg [15:0] counter = 0;
-
-    always @(posedge clk_19mhz)
-    begin
-        counter <= counter + 1;
-    end
 
     assign usb_pu = 0;
 endmodule
