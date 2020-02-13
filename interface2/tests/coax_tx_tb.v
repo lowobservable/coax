@@ -37,6 +37,12 @@ module coax_tx_tb();
         load = 1;
         #8 load = 0;
 
+        #200
+
+        data = 10'b1111111111;
+        load = 1;
+        # 8 load = 0;
+
         repeat(1000) @(posedge clk);
 
         $finish;
