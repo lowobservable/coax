@@ -44,7 +44,7 @@ module coax_tx (
     reg [3:0] output_data_counter;
     reg parity_bit;
 
-    reg [1:0] tx_delay_reg;
+    reg [1:0] tx_delay_reg; // TODO: change size to be 1/4 clocks per bit
 
     always @(*)
     begin
