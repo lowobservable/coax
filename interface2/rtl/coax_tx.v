@@ -44,7 +44,9 @@ module coax_tx (
     reg [3:0] output_data_counter;
     reg parity_bit;
 
-    reg [1:0] tx_delay_reg; // TODO: change size to be 1/4 clocks per bit
+    localparam TX_DELAY_CLOCKS = CLOCKS_PER_BIT / 4;
+
+    reg [TX_DELAY_CLOCKS-1:0] tx_delay_buffer;
 
     always @(*)
     begin
@@ -142,9 +144,9 @@ module coax_tx (
     begin
         // The delayed output is "stretched" to go high when active.
         if (!active)
-            tx_delay_reg <= 2'b11;
+            tx_delay_buffer <= { TX_DELAY_CLOCKS{1'b1} };
         else
-            tx_delay_reg <= { tx_delay_reg[0], tx };
+            tx_delay_buffer <= { tx_delay_buffer[TX_DELAY_CLOCKS-2:0], tx };
     end
 
     assign active = ((state == LINE_QUIESCE_1 && !bit_first_half) || state > LINE_QUIESCE_1);
@@ -173,6 +175,6 @@ module coax_tx (
             tx <= 1;
     end
 
-    assign tx_delay = active ? tx_delay_reg[1] : 0;
+    assign tx_delay = active ? tx_delay_buffer[TX_DELAY_CLOCKS-1] : 0;
     assign tx_inverted = active ? ~tx : 0;
 endmodule
