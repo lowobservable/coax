@@ -38,7 +38,7 @@ module coax_tx (
     reg [4:0] next_state;
     reg [4:0] previous_state;
 
-    reg [1:0] xxx = 2'b00;
+    reg [1:0] data_valid = 2'b00;
     reg [9:0] holding_data;
     reg [9:0] output_data;
     reg [3:0] output_data_counter;
@@ -66,7 +66,7 @@ module coax_tx (
                 CODE_VIOLATION_3: next_state <= SYNC_BIT;
                 SYNC_BIT: next_state <= DATA;
                 DATA: next_state <= output_data_counter == 9 ? PARITY_BIT : DATA;
-                PARITY_BIT: next_state <= xxx[1] ? SYNC_BIT : END_1;
+                PARITY_BIT: next_state <= data_valid[1] ? SYNC_BIT : END_1;
                 END_1: next_state <= END_2;
                 END_2: next_state <= END_3;
                 END_3: next_state <= IDLE;
@@ -89,17 +89,19 @@ module coax_tx (
         if (load && !previous_load)
         begin
 
-            if (xxx[1])
+            if (full)
             begin
                 // TODO: error...
             end
+            else if (data_valid[0])
+            begin
+                data_valid <= { 1'b1, data_valid[0] };
+                holding_data <= data;
+            end
             else
             begin
-                // TODO: make this more intelligent in the case of both
-                // data registers being empty!
-
-                xxx <= { 1'b1, xxx[0] };
-                holding_data <= data;
+                data_valid <= { data_valid[1], 1'b1 };
+                output_data <= data;
             end
 
             if (state == IDLE)
@@ -115,8 +117,12 @@ module coax_tx (
 
         if (state == SYNC_BIT && state != previous_state)
         begin
-            xxx <= { 1'b0, xxx[1] };
-            output_data <= holding_data;
+            if (!data_valid[0])
+            begin
+                data_valid <= { 1'b0, data_valid[1] };
+                output_data <= holding_data;
+            end
+
             output_data_counter <= 0;
 
             parity_bit <= 1; // Even parity includes sync bit
@@ -131,11 +137,11 @@ module coax_tx (
         end
         else if (state == PARITY_BIT && state != previous_state)
         begin
-            xxx <= { xxx[1], 1'b0 };
+            data_valid <= { data_valid[1], 1'b0 };
         end
     end
 
-    assign full = xxx[1];
+    assign full = data_valid[1]; // TODO: full should be indicated to give setup time at bit 10
 
     assign bit_strobe = (bit_counter == CLOCKS_PER_BIT - 1);
     assign bit_first_half = (bit_counter < CLOCKS_PER_BIT / 2);
