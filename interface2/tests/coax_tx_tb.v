@@ -31,17 +31,17 @@ module coax_tx_tb();
         $dumpfile("coax_tx_tb.vcd");
         $dumpvars(0, coax_tx_tb);
 
-        repeat(10) @(posedge clk);
+        #8
 
         data = 10'b0000000101;
         load = 1;
-        #8 load = 0;
+        #2 load = 0;
 
-        #200
+        #32
 
         data = 10'b1111111111;
         load = 1;
-        # 8 load = 0;
+        #2 load = 0;
 
         repeat(1000) @(posedge clk);
 

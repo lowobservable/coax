@@ -29,20 +29,31 @@ module coax_tx (
     localparam END_2 = 14;
     localparam END_3 = 15;
 
-    reg [$clog2(CLOCKS_PER_BIT):0] bit_counter = 0;
-
-    wire bit_strobe;
-    wire bit_first_half;
-
     reg [4:0] state = IDLE;
     reg [4:0] next_state;
-    reg [4:0] previous_state;
+    reg [4:0] previous_state = IDLE;
 
+    reg previous_load = 0;
     reg [1:0] data_valid = 2'b00;
     reg [9:0] holding_data;
     reg [9:0] output_data;
     reg [3:0] output_data_counter;
     reg parity_bit;
+
+    reg bit_counter_reset = 0;
+    wire bit_strobe;
+    wire bit_first_half;
+    wire bit_second_half;
+
+    coax_bit_timer #(
+        .CLOCKS_PER_BIT(CLOCKS_PER_BIT)
+    ) bit_timer (
+        .clk(clk),
+        .reset(bit_counter_reset),
+        .strobe(bit_strobe),
+        .first_half(bit_first_half),
+        .second_half(bit_second_half)
+    );
 
     localparam TX_DELAY_CLOCKS = CLOCKS_PER_BIT / 4;
 
@@ -74,21 +85,15 @@ module coax_tx (
         end
     end
 
-    reg previous_load = 0;
-
     always @(posedge clk)
     begin
         previous_state <= state;
         state <= next_state;
 
-        if (bit_counter == CLOCKS_PER_BIT - 1)
-            bit_counter <= 0;
-        else
-            bit_counter <= bit_counter + 1;
+        bit_counter_reset <= 0;
 
         if (load && !previous_load)
         begin
-
             if (full)
             begin
                 // TODO: error...
@@ -106,7 +111,7 @@ module coax_tx (
 
             if (state == IDLE)
             begin
-                bit_counter <= 0;
+                bit_counter_reset <= 1;
 
                 // Let's go!
                 state <= LINE_QUIESCE_1;
@@ -143,19 +148,7 @@ module coax_tx (
 
     assign full = data_valid[1]; // TODO: full should be indicated to give setup time at bit 10
 
-    assign bit_strobe = (bit_counter == CLOCKS_PER_BIT - 1);
-    assign bit_first_half = (bit_counter < CLOCKS_PER_BIT / 2);
-
-    always @(posedge clk)
-    begin
-        // The delayed output is "stretched" to go high when active.
-        if (!active)
-            tx_delay_buffer <= { TX_DELAY_CLOCKS{1'b1} };
-        else
-            tx_delay_buffer <= { tx_delay_buffer[TX_DELAY_CLOCKS-2:0], tx };
-    end
-
-    assign active = ((state == LINE_QUIESCE_1 && !bit_first_half) || state > LINE_QUIESCE_1);
+    assign active = ((state == LINE_QUIESCE_1 && bit_second_half) || state > LINE_QUIESCE_1);
 
     always @(*) // ??? is this best?
     begin
@@ -179,6 +172,15 @@ module coax_tx (
             tx <= bit_first_half ? 1 : 0;
         else if (state == END_2 || state == END_3)
             tx <= 1;
+    end
+
+    always @(posedge clk)
+    begin
+        // The delayed output is "stretched" to go high when active.
+        if (!active)
+            tx_delay_buffer <= { TX_DELAY_CLOCKS{1'b1} };
+        else
+            tx_delay_buffer <= { tx_delay_buffer[TX_DELAY_CLOCKS-2:0], tx };
     end
 
     assign tx_delay = active ? tx_delay_buffer[TX_DELAY_CLOCKS-1] : 0;
