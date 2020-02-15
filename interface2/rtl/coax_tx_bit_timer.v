@@ -1,6 +1,6 @@
 `default_nettype none
 
-module coax_bit_timer (
+module coax_tx_bit_timer (
     input clk,
     input reset,
     output first_half,

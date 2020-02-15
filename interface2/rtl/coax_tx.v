@@ -45,7 +45,7 @@ module coax_tx (
     wire bit_second_half;
     wire bit_end_strobe;
 
-    coax_bit_timer #(
+    coax_tx_bit_timer #(
         .CLOCKS_PER_BIT(CLOCKS_PER_BIT)
     ) bit_timer (
         .clk(clk),

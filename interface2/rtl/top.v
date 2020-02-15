@@ -6,6 +6,10 @@ module top (
     output tx,
     output tx_delay,
     output tx_inverted,
+    input rx,
+    output rx_active,
+    output xxx_debug_1,
+    output xxx_debug_2,
     output usb_pu
 );
     // 19 MHz
@@ -26,12 +30,10 @@ module top (
         .PLLOUTCORE(clk_19mhz)
     );
 
-    hello_world hello_world (
+    coax_rx coax_rx (
         .clk(clk_19mhz),
-        .tx_active(tx_active),
-        .tx(tx),
-        .tx_delay(tx_delay),
-        .tx_inverted(tx_inverted)
+        .rx(rx),
+        .active(rx_active)
     );
 
     assign usb_pu = 0;

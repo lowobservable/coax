@@ -1,6 +1,6 @@
 `default_nettype none
 
-module coax_bit_timer_tb();
+module coax_tx_bit_timer_tb();
     reg clk = 0;
 
     initial
@@ -16,7 +16,7 @@ module coax_bit_timer_tb();
     wire second_half;
     wire end_strobe;
 
-    coax_bit_timer #(
+    coax_tx_bit_timer #(
         .CLOCKS_PER_BIT(8)
     ) dut (
         .clk(clk),
@@ -28,8 +28,8 @@ module coax_bit_timer_tb();
 
     initial
     begin
-        $dumpfile("coax_bit_timer_tb.vcd");
-        $dumpvars(0, coax_bit_timer_tb);
+        $dumpfile("coax_tx_bit_timer_tb.vcd");
+        $dumpvars(0, coax_tx_bit_timer_tb);
 
         repeat(100) @(posedge clk);
 

@@ -5,7 +5,7 @@ TINYPROG ?= tinyprog
 
 all: top.bin
 
-top.json: top.v hello_world.v coax_bit_timer.v coax_tx.v
+top.json: top.v hello_world.v coax_tx_bit_timer.v coax_tx.v coax_rx_bit_timer.v coax_rx.v
 
 prog: top.bin
 	$(TINYPROG) -p top.bin

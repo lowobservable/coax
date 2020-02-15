@@ -3,6 +3,13 @@ set_io --warn-no-port tx C2
 set_io --warn-no-port tx_delay C1
 set_io --warn-no-port tx_inverted D2
 
+set_io --warn-no-port rx D1
+set_io --warn-no-port rx_active E2
+set_io --warn-no-port rx_data_available E1
+
+set_io --warn-no-port xxx_debug_1 G2
+set_io --warn-no-port xxx_debug_2 H1
+
 # 16MHz clock
 set_io --warn-no-port clk_16mhz B2
 
