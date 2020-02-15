@@ -40,19 +40,19 @@ module coax_tx (
     reg [3:0] output_data_counter;
     reg parity_bit;
 
-    reg bit_counter_reset = 0;
-    wire bit_strobe;
+    reg bit_timer_reset = 0;
     wire bit_first_half;
     wire bit_second_half;
+    wire bit_end_strobe;
 
     coax_bit_timer #(
         .CLOCKS_PER_BIT(CLOCKS_PER_BIT)
     ) bit_timer (
         .clk(clk),
-        .reset(bit_counter_reset),
-        .strobe(bit_strobe),
+        .reset(bit_timer_reset),
         .first_half(bit_first_half),
-        .second_half(bit_second_half)
+        .second_half(bit_second_half),
+        .end_strobe(bit_end_strobe)
     );
 
     localparam TX_DELAY_CLOCKS = CLOCKS_PER_BIT / 4;
@@ -63,7 +63,7 @@ module coax_tx (
     begin
         next_state <= state;
 
-        if (bit_strobe)
+        if (bit_end_strobe)
         begin
             case (state)
                 LINE_QUIESCE_1: next_state <= LINE_QUIESCE_2;
@@ -90,7 +90,7 @@ module coax_tx (
         previous_state <= state;
         state <= next_state;
 
-        bit_counter_reset <= 0;
+        bit_timer_reset <= 0;
 
         if (load && !previous_load)
         begin
@@ -111,7 +111,7 @@ module coax_tx (
 
             if (state == IDLE)
             begin
-                bit_counter_reset <= 1;
+                bit_timer_reset <= 1;
 
                 // Let's go!
                 state <= LINE_QUIESCE_1;
@@ -132,7 +132,7 @@ module coax_tx (
 
             parity_bit <= 1; // Even parity includes sync bit
         end
-        else if (state == DATA && bit_strobe)
+        else if (state == DATA && bit_end_strobe)
         begin
             output_data <= { output_data[8:0], 1'b0 };
             output_data_counter <= output_data_counter + 1;

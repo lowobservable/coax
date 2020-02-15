@@ -3,9 +3,9 @@
 module coax_bit_timer (
     input clk,
     input reset,
-    output strobe,
     output first_half,
-    output second_half
+    output second_half,
+    output end_strobe
 );
     parameter CLOCKS_PER_BIT = 8;
 
@@ -26,8 +26,8 @@ module coax_bit_timer (
         end
     end
 
-    assign strobe = (counter == CLOCKS_PER_BIT - 1);
-
     assign first_half = (counter < CLOCKS_PER_BIT / 2);
     assign second_half = ~first_half;
+
+    assign end_strobe = (counter == CLOCKS_PER_BIT - 1);
 endmodule

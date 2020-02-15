@@ -12,18 +12,18 @@ module coax_bit_timer_tb();
     end
 
     reg reset = 0;
-    wire strobe;
     wire first_half;
     wire second_half;
+    wire end_strobe;
 
     coax_bit_timer #(
         .CLOCKS_PER_BIT(8)
     ) dut (
         .clk(clk),
         .reset(reset),
-        .strobe(strobe),
         .first_half(first_half),
-        .second_half(second_half)
+        .second_half(second_half),
+        .end_strobe(end_strobe)
     );
 
     initial
