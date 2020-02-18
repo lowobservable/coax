@@ -24,11 +24,16 @@ module coax_rx_tb();
         .tx(tx_tx)
     );
 
+    reg rx_data_read = 0;
+    wire rx_data_available;
+
     coax_rx #(
         .CLOCKS_PER_BIT(8)
     ) dut (
         .clk(clk),
-        .rx(tx_tx)
+        .rx(tx_tx),
+        .data_read(rx_data_read),
+        .data_available(rx_data_available)
     );
 
     initial
@@ -48,7 +53,17 @@ module coax_rx_tb();
         tx_load = 1;
         #2 tx_load = 0;
 
-        repeat(1000) @(posedge clk);
+        repeat(200) @(posedge clk);
+
+        rx_data_read = 1;
+        #4 rx_data_read = 0;
+
+        repeat(100) @(posedge clk);
+
+        rx_data_read = 1;
+        #4 rx_data_read = 0;
+
+        repeat(100) @(posedge clk);
 
         $finish;
     end

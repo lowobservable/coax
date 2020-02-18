@@ -3,7 +3,10 @@
 module coax_rx (
     input clk,
     input rx,
-    output active
+    input data_read,
+    output active,
+    output reg [9:0] data = 10'b0,
+    output reg data_available = 0
 );
     parameter CLOCKS_PER_BIT = 8;
 
@@ -90,7 +93,7 @@ module coax_rx (
                 CODE_VIOLATION_2: next_state <= rx_1 ? CODE_VIOLATION_3A: IDLE;
                 SYNC_BIT: next_state <= rx_1 ? DATA : /* TODO: ERROR */ IDLE;
                 DATA: next_state <= input_data_counter == 9 ? PARITY_BIT : DATA;
-                PARITY_BIT: next_state <= rx_1 == parity_bit ? END_1 : /* TODO: ERROR */ IDLE;
+                PARITY_BIT: next_state <= rx_1 == parity_bit ? END_1 : /* TODO: ERROR... also check for overflow of data */ IDLE;
                 END_1: next_state <= rx_1 ? DATA : IDLE; // TODO: END_2
             endcase
         end
@@ -100,6 +103,9 @@ module coax_rx (
     begin
         rx_0 <= rx;
         rx_1 <= rx_0;
+
+        if (data_read && data_available)
+            data_available <= 0;
 
         if (state == DATA)
         begin
@@ -118,6 +124,11 @@ module coax_rx (
                 if (rx_1)
                     parity_bit <= ~parity_bit;
             end
+        end
+        else if (state == END_1 && state != previous_state)
+        begin
+            data <= input_data;
+            data_available <= 1;
         end
 
         state <= next_state;
