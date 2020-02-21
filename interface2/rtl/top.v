@@ -2,14 +2,17 @@
 
 module top (
     input clk_16mhz,
-    output tx_active,
-    output tx,
-    output tx_delay,
-    output tx_inverted,
-    input rx,
-    output rx_active,
-    output xxx_debug_1,
-    output xxx_debug_2,
+
+    // DP8341 receiver
+    input dp8341_data_in,
+    output dp8341_rx_active,
+    input dp8341_register_read_n,
+    output dp8341_data_available,
+    input dp8341_output_enable,
+
+    // Shared data bus
+    inout [9:0] data,
+
     output usb_pu
 );
     // 19 MHz
@@ -30,10 +33,21 @@ module top (
         .PLLOUTCORE(clk_19mhz)
     );
 
-    coax_rx coax_rx (
+    wire dp8341_rx_disable;
+
+    assign dp8341_rx_disable = 0;
+
+    dp8341_shim #(
+        .CLOCKS_PER_BIT(8)
+    ) dp8341 (
         .clk(clk_19mhz),
-        .rx(rx),
-        .active(rx_active)
+        .rx_disable(dp8341_rx_disable),
+        .data_in(dp8341_data_in),
+        .rx_active(dp8341_rx_active),
+        .register_read_n(dp8341_register_read_n),
+        .data_available(dp8341_data_available),
+        .output_enable(dp8341_output_enable),
+        .data_out(data)
     );
 
     assign usb_pu = 0;

@@ -1,16 +1,23 @@
-set_io --warn-no-port tx_active B1
-set_io --warn-no-port tx C2
-set_io --warn-no-port tx_delay C1
-set_io --warn-no-port tx_inverted D2
-
-set_io --warn-no-port rx D1
-set_io --warn-no-port rx_active E2
-set_io --warn-no-port rx_data_available E1
-
-set_io --warn-no-port xxx_debug_1 G2
-set_io --warn-no-port xxx_debug_2 H1
-
 # 16MHz clock
 set_io --warn-no-port clk_16mhz B2
+
+# DP8341 receiver
+set_io --warn-no-port dp8341_data_in A2
+set_io --warn-no-port dp8341_rx_active D2
+set_io --warn-no-port dp8341_register_read_n D1
+set_io --warn-no-port dp8341_data_available E2
+set_io --warn-no-port dp8341_output_enable E1
+
+# Shared data bus
+set_io --warn-no-port data[9] B6
+set_io --warn-no-port data[8] A7
+set_io --warn-no-port data[7] B7
+set_io --warn-no-port data[6] A8
+set_io --warn-no-port data[5] B8
+set_io --warn-no-port data[4] A9
+set_io --warn-no-port data[3] C9
+set_io --warn-no-port data[2] D8
+set_io --warn-no-port data[1] D9
+set_io --warn-no-port data[0] H9
 
 set_io --warn-no-port usb_pu A3
