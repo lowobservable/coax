@@ -133,6 +133,8 @@ F 0 "C1" H 3315 6496 50  0000 L CNN
 F 1 "0.1uF" H 3315 6405 50  0000 L CNN
 F 2 "Capacitor_SMD:C_1206_3216Metric" H 3238 6300 50  0001 C CNN
 F 3 "~" H 3200 6450 50  0001 C CNN
+F 4 "Vishay" H 3200 6450 50  0001 C CNN "Manufacturer"
+F 5 "VJ1206Y104JXAMR" H 3200 6450 50  0001 C CNN "Part"
 	1    3200 6450
 	1    0    0    -1  
 $EndComp
@@ -144,6 +146,8 @@ F 0 "C2" H 3765 6496 50  0000 L CNN
 F 1 "0.1uF" H 3765 6405 50  0000 L CNN
 F 2 "Capacitor_SMD:C_1206_3216Metric" H 3688 6300 50  0001 C CNN
 F 3 "~" H 3650 6450 50  0001 C CNN
+F 4 "Vishay" H 3650 6450 50  0001 C CNN "Manufacturer"
+F 5 "VJ1206Y104JXAMR" H 3650 6450 50  0001 C CNN "Part"
 	1    3650 6450
 	1    0    0    -1  
 $EndComp
@@ -155,6 +159,8 @@ F 0 "C3" H 5265 6496 50  0000 L CNN
 F 1 "0.1uF" H 5265 6405 50  0000 L CNN
 F 2 "Capacitor_SMD:C_1206_3216Metric" H 5188 6300 50  0001 C CNN
 F 3 "~" H 5150 6450 50  0001 C CNN
+F 4 "Vishay" H 5150 6450 50  0001 C CNN "Manufacturer"
+F 5 "VJ1206Y104JXAMR" H 5150 6450 50  0001 C CNN "Part"
 	1    5150 6450
 	1    0    0    -1  
 $EndComp
@@ -166,6 +172,8 @@ F 0 "C4" H 5535 6496 50  0000 R CNN
 F 1 "0.01uF" H 5535 6405 50  0000 R CNN
 F 2 "Capacitor_SMD:C_1206_3216Metric" H 5688 6300 50  0001 C CNN
 F 3 "~" H 5650 6450 50  0001 C CNN
+F 4 "Vishay" H 5650 6450 50  0001 C CNN "Manufacturer"
+F 5 "VJ1206Y103JXAMC" H 5650 6450 50  0001 C CNN "Part"
 	1    5650 6450
 	-1   0    0    -1  
 $EndComp
@@ -221,6 +229,8 @@ F 0 "C5" H 5265 1446 50  0000 L CNN
 F 1 "0.1uF" H 5265 1355 50  0000 L CNN
 F 2 "Capacitor_SMD:C_1206_3216Metric" H 5188 1250 50  0001 C CNN
 F 3 "~" H 5150 1400 50  0001 C CNN
+F 4 "Vishay" H 5150 1400 50  0001 C CNN "Manufacturer"
+F 5 "VJ1206Y104JXAMR" H 5150 1400 50  0001 C CNN "Part"
 	1    5150 1400
 	1    0    0    -1  
 $EndComp
@@ -232,6 +242,8 @@ F 0 "C6" H 5535 1446 50  0000 R CNN
 F 1 "0.01uF" H 5535 1355 50  0000 R CNN
 F 2 "Capacitor_SMD:C_1206_3216Metric" H 5688 1250 50  0001 C CNN
 F 3 "~" H 5650 1400 50  0001 C CNN
+F 4 "Vishay" H 5650 1400 50  0001 C CNN "Manufacturer"
+F 5 "VJ1206Y103JXAMC" H 5650 1400 50  0001 C CNN "Part"
 	1    5650 1400
 	-1   0    0    -1  
 $EndComp
@@ -357,6 +369,8 @@ F 0 "T1" H 8950 4450 50  0000 C CNN
 F 1 "Murata 78602/8JC" H 8950 4350 50  0000 C CNN
 F 2 "library:Murata_786J" H 8950 3700 50  0001 C CNN
 F 3 "https://www.murata-ps.com/datasheet?/data/magnetics/kmp_786j.pdf" H 9250 3700 50  0001 C CNN
+F 4 "Murata" H 8950 3700 50  0001 C CNN "Manufacturer"
+F 5 "78602/8JC" H 8950 3700 50  0001 C CNN "Part"
 	1    8950 3700
 	1    0    0    -1  
 $EndComp
@@ -554,6 +568,8 @@ F 0 "R6" H 9420 3746 50  0000 L CNN
 F 1 "120" H 9420 3655 50  0000 L CNN
 F 2 "Resistor_SMD:R_1206_3216Metric" V 9280 3700 50  0001 C CNN
 F 3 "~" H 9350 3700 50  0001 C CNN
+F 4 "Vishay" H 9350 3700 50  0001 C CNN "Manufacturer"
+F 5 "CRCW1206120RFKEAC" H 9350 3700 50  0001 C CNN "Part"
 	1    9350 3700
 	1    0    0    -1  
 $EndComp
@@ -565,6 +581,8 @@ F 0 "J1" H 10050 3475 50  0000 L CNN
 F 1 "Conn_Coaxial" H 10050 3384 50  0001 L CNN
 F 2 "Connector_Coaxial:BNC_Amphenol_B6252HB-NPP3G-50_Horizontal" H 9950 3500 50  0001 C CNN
 F 3 " ~" H 9950 3500 50  0001 C CNN
+F 4 "TE Connectivity" H 9950 3500 50  0001 C CNN "Manufacturer"
+F 5 "5227161-3" H 9950 3500 50  0001 C CNN "Part"
 	1    9950 3500
 	1    0    0    -1  
 $EndComp
@@ -584,6 +602,8 @@ F 0 "R5" H 6930 4554 50  0000 R CNN
 F 1 "510" H 6930 4645 50  0000 R CNN
 F 2 "Resistor_SMD:R_1206_3216Metric" V 6930 4600 50  0001 C CNN
 F 3 "~" H 7000 4600 50  0001 C CNN
+F 4 "Vishay" H 7000 4600 50  0001 C CNN "Manufacturer"
+F 5 "CRCW1206510RJNEAIF" H 7000 4600 50  0001 C CNN "Part"
 	1    7000 4600
 	-1   0    0    1   
 $EndComp
@@ -627,6 +647,8 @@ F 0 "U2" H 5500 5500 50  0000 C CNN
 F 1 "MC3487N" H 5600 5400 50  0000 C CNN
 F 2 "Package_SO:SOIC-16_3.9x9.9mm_P1.27mm" H 5450 4750 50  0001 C CNN
 F 3 "http://www.ti.com/lit/ds/symlink/mc3487.pdf" H 5450 5150 50  0001 C CNN
+F 4 "TI" H 5450 5150 50  0001 C CNN "Manufacturer"
+F 5 "MC3487DR" H 5450 5150 50  0001 C CNN "Part"
 	2    5450 5150
 	1    0    0    -1  
 $EndComp
@@ -638,6 +660,8 @@ F 0 "U2" H 5500 4400 50  0000 C CNN
 F 1 "MC3487N" H 5600 4300 50  0000 C CNN
 F 2 "Package_SO:SOIC-16_3.9x9.9mm_P1.27mm" H 5450 3650 50  0001 C CNN
 F 3 "http://www.ti.com/lit/ds/symlink/mc3487.pdf" H 5450 4050 50  0001 C CNN
+F 4 "TI" H 5450 4050 50  0001 C CNN "Manufacturer"
+F 5 "MC3487DR" H 5450 4050 50  0001 C CNN "Part"
 	1    5450 4050
 	1    0    0    -1  
 $EndComp
@@ -748,6 +772,8 @@ F 0 "U3" H 3450 3150 50  0000 C CNN
 F 1 "TXB0104D" H 3450 3050 50  0000 C CNN
 F 2 "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" H 3450 3400 50  0001 C CNN
 F 3 "http://www.ti.com/lit/ds/symlink/txb0104.pdf" H 3560 4245 50  0001 C CNN
+F 4 "TI" H 3450 4150 50  0001 C CNN "Manufacturer"
+F 5 "TXB0104D" H 3450 4150 50  0001 C CNN "Part"
 	1    3450 4150
 	1    0    0    -1  
 $EndComp
@@ -759,6 +785,8 @@ F 0 "R4" V 6450 5250 50  0000 C CNN
 F 1 "33" V 6350 5250 50  0000 C CNN
 F 2 "Resistor_SMD:R_1206_3216Metric" V 6180 5250 50  0001 C CNN
 F 3 "~" H 6250 5250 50  0001 C CNN
+F 4 "Vishay" H 6250 5250 50  0001 C CNN "Manufacturer"
+F 5 "CRCW120633R0FKEAC" H 6250 5250 50  0001 C CNN "Part"
 	1    6250 5250
 	0    1    1    0   
 $EndComp
@@ -770,6 +798,8 @@ F 0 "R3" V 6043 5050 50  0000 C CNN
 F 1 "33" V 6134 5050 50  0000 C CNN
 F 2 "Resistor_SMD:R_1206_3216Metric" V 6180 5050 50  0001 C CNN
 F 3 "~" H 6250 5050 50  0001 C CNN
+F 4 "Vishay" H 6250 5050 50  0001 C CNN "Manufacturer"
+F 5 "CRCW120633R0FKEAC" H 6250 5050 50  0001 C CNN "Part"
 	1    6250 5050
 	0    1    1    0   
 $EndComp
@@ -781,6 +811,8 @@ F 0 "R1" V 6043 3950 50  0000 C CNN
 F 1 "150" V 6134 3950 50  0000 C CNN
 F 2 "Resistor_SMD:R_1206_3216Metric" V 6180 3950 50  0001 C CNN
 F 3 "~" H 6250 3950 50  0001 C CNN
+F 4 "Vishay" H 6250 3950 50  0001 C CNN "Manufacturer"
+F 5 "CRCW1206150RFKEAC" H 6250 3950 50  0001 C CNN "Part"
 	1    6250 3950
 	0    1    1    0   
 $EndComp
@@ -792,6 +824,8 @@ F 0 "R2" V 6450 4150 50  0000 C CNN
 F 1 "150" V 6350 4150 50  0000 C CNN
 F 2 "Resistor_SMD:R_1206_3216Metric" V 6180 4150 50  0001 C CNN
 F 3 "~" H 6250 4150 50  0001 C CNN
+F 4 "Vishay" H 6250 4150 50  0001 C CNN "Manufacturer"
+F 5 "CRCW1206150RFKEAC" H 6250 4150 50  0001 C CNN "Part"
 	1    6250 4150
 	0    -1   1    0   
 $EndComp
@@ -803,6 +837,8 @@ F 0 "U1" H 5550 2700 50  0000 L CNN
 F 1 "MC3486N" H 5550 2800 50  0000 L CNN
 F 2 "Package_SO:SOIC-16_3.9x9.9mm_P1.27mm" H 5450 2550 50  0001 C CNN
 F 3 "http://www.ti.com/lit/ds/symlink/mc3486.pdf" H 5450 2950 50  0001 C CNN
+F 4 "TI" H 5450 2950 50  0001 C CNN "Manufacturer"
+F 5 "MC3486DR" H 5450 2950 50  0001 C CNN "Part"
 	1    5450 2950
 	-1   0    0    1   
 $EndComp
@@ -880,6 +916,8 @@ F 0 "U2" H 9850 6000 50  0000 C CNN
 F 1 "MC3487N" H 9950 5900 50  0000 C CNN
 F 2 "Package_SO:SOIC-16_3.9x9.9mm_P1.27mm" H 9800 5250 50  0001 C CNN
 F 3 "http://www.ti.com/lit/ds/symlink/mc3487.pdf" H 9800 5650 50  0001 C CNN
+F 4 "TI" H 9800 5650 50  0001 C CNN "Manufacturer"
+F 5 "MC3487DR" H 9800 5650 50  0001 C CNN "Part"
 	4    9800 5650
 	1    0    0    -1  
 $EndComp
@@ -891,6 +929,8 @@ F 0 "U2" H 8600 6000 50  0000 C CNN
 F 1 "MC3487N" H 8700 5900 50  0000 C CNN
 F 2 "Package_SO:SOIC-16_3.9x9.9mm_P1.27mm" H 8550 5250 50  0001 C CNN
 F 3 "http://www.ti.com/lit/ds/symlink/mc3487.pdf" H 8550 5650 50  0001 C CNN
+F 4 "TI" H 8550 5650 50  0001 C CNN "Manufacturer"
+F 5 "MC3487DR" H 8550 5650 50  0001 C CNN "Part"
 	3    8550 5650
 	1    0    0    -1  
 $EndComp
@@ -985,6 +1025,8 @@ F 0 "U1" H 9900 1250 50  0000 L CNN
 F 1 "MC3486N" H 9900 1350 50  0000 L CNN
 F 2 "Package_SO:SOIC-16_3.9x9.9mm_P1.27mm" H 9800 1100 50  0001 C CNN
 F 3 "http://www.ti.com/lit/ds/symlink/mc3486.pdf" H 9800 1500 50  0001 C CNN
+F 4 "TI" H 9800 1500 50  0001 C CNN "Manufacturer"
+F 5 "MC3486DR" H 9800 1500 50  0001 C CNN "Part"
 	4    9800 1500
 	-1   0    0    1   
 $EndComp
@@ -996,6 +1038,8 @@ F 0 "U1" H 8650 1250 50  0000 L CNN
 F 1 "MC3486N" H 8650 1350 50  0000 L CNN
 F 2 "Package_SO:SOIC-16_3.9x9.9mm_P1.27mm" H 8550 1100 50  0001 C CNN
 F 3 "http://www.ti.com/lit/ds/symlink/mc3486.pdf" H 8550 1500 50  0001 C CNN
+F 4 "TI" H 8550 1500 50  0001 C CNN "Manufacturer"
+F 5 "MC3486DR" H 8550 1500 50  0001 C CNN "Part"
 	3    8550 1500
 	-1   0    0    1   
 $EndComp
@@ -1040,6 +1084,8 @@ F 0 "U1" H 7400 1250 50  0000 L CNN
 F 1 "MC3486N" H 7400 1350 50  0000 L CNN
 F 2 "Package_SO:SOIC-16_3.9x9.9mm_P1.27mm" H 7300 1100 50  0001 C CNN
 F 3 "http://www.ti.com/lit/ds/symlink/mc3486.pdf" H 7300 1500 50  0001 C CNN
+F 4 "TI" H 7300 1500 50  0001 C CNN "Manufacturer"
+F 5 "MC3486DR" H 7300 1500 50  0001 C CNN "Part"
 	2    7300 1500
 	-1   0    0    1   
 $EndComp
