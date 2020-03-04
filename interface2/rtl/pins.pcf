@@ -1,12 +1,11 @@
 # 16MHz clock
 set_io --warn-no-port clk_16mhz B2
 
-# DP8341 receiver
-set_io --warn-no-port dp8341_data_in A2
-set_io --warn-no-port dp8341_rx_active D2
-set_io --warn-no-port dp8341_register_read_n D1
-set_io --warn-no-port dp8341_data_available E2
-set_io --warn-no-port dp8341_output_enable E1
+# Receiver
+set_io --warn-no-port rx A2
+set_io --warn-no-port rx_active D2
+set_io --warn-no-port rx_data_available D1
+set_io --warn-no-port rx_data_read E2
 
 # Shared data bus
 set_io --warn-no-port data[9] B6
