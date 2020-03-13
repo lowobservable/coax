@@ -96,27 +96,15 @@ class SecondaryControlTestCase(unittest.TestCase):
         self.assertEqual(control.value, 0b00000001)
 
 class PackCommandWordTestCase(unittest.TestCase):
-    def test_without_address(self):
+    def test(self):
         self.assertEqual(pack_command_word(Command.POLL_ACK), 0b0001000101)
 
-    def test_with_address(self):
-        self.assertEqual(pack_command_word(Command.POLL_ACK, address=7), 0b1111000101)
-
 class UnpackCommandWordTestCase(unittest.TestCase):
-    def test_without_address(self):
+    def test(self):
         # Act
-        (address, command) = unpack_command_word(0b0001000101)
+        command = unpack_command_word(0b0001000101)
 
         # Assert
-        self.assertEqual(address, 0)
-        self.assertEqual(command, Command.POLL_ACK)
-
-    def test_with_address(self):
-        # Act
-        (address, command) = unpack_command_word(0b1111000101)
-
-        # Assert
-        self.assertEqual(address, 7)
         self.assertEqual(command, Command.POLL_ACK)
 
     def test_command_bit_not_set_error(self):

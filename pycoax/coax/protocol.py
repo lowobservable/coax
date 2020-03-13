@@ -313,9 +313,9 @@ def diagnostic_reset(interface):
     """Execute a DIAGNOSTIC_RESET command."""
     raise NotImplementedError
 
-def pack_command_word(command, address=0):
-    """Pack a command and address into a 10-bit command word."""
-    return (address << 7) | (command.value << 2) | 0x1
+def pack_command_word(command):
+    """Pack a command into a 10-bit command word."""
+    return (command.value << 2) | 0x1
 
 def is_command_word(word):
     """Is command word bit set?"""
@@ -326,10 +326,9 @@ def unpack_command_word(word):
     if not is_command_word(word):
         raise ProtocolError('Word does not have command bit set')
 
-    address = (word >> 7) & 0x7
     command = (word >> 2) & 0x1f
 
-    return (address, Command(command))
+    return Command(command)
 
 def is_data_word(word):
     """Is data word bit set?"""
@@ -362,7 +361,7 @@ def _execute_read_command(interface, command_word, response_length=1,
         return trta_value
 
     if validate_response_length and len(response) != response_length:
-        (_, command) = unpack_command_word(command_word)
+        command = unpack_command_word(command_word)
 
         raise ProtocolError(f'Expected {response_length} word {command.name} response')
 
@@ -373,7 +372,7 @@ def _execute_write_command(interface, command_word, data=None, **kwargs):
     response = interface.execute(command_word, data, **kwargs)
 
     if len(response) != 1:
-        (_, command) = unpack_command_word(command_word)
+        command = unpack_command_word(command_word)
 
         raise ProtocolError(f'Expected 1 word {command.name} response')
 
