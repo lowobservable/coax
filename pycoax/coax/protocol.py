@@ -167,10 +167,10 @@ class SecondaryControl:
 
 def poll(interface, action=PollAction.NONE, **kwargs):
     """Execute a POLL command."""
-    command_word = (action.value << 8) | _pack_command_word(Command.POLL)
+    command_word = (action.value << 8) | pack_command_word(Command.POLL)
 
     response = _execute_read_command(interface, command_word, allow_trta_response=True,
-                                     unpack_data_words=False, **kwargs)
+                                     unpack=False, **kwargs)
 
     if response is None:
         return None
@@ -187,13 +187,13 @@ def poll(interface, action=PollAction.NONE, **kwargs):
 
 def poll_ack(interface, **kwargs):
     """Execute a POLL_ACK command."""
-    command_word = _pack_command_word(Command.POLL_ACK)
+    command_word = pack_command_word(Command.POLL_ACK)
 
     _execute_write_command(interface, command_word, **kwargs)
 
 def read_status(interface, **kwargs):
     """Execute a READ_STATUS command."""
-    command_word = _pack_command_word(Command.READ_STATUS)
+    command_word = pack_command_word(Command.READ_STATUS)
 
     response = _execute_read_command(interface, command_word, **kwargs)
 
@@ -201,7 +201,7 @@ def read_status(interface, **kwargs):
 
 def read_terminal_id(interface, **kwargs):
     """Execute a READ_TERMINAL_ID command."""
-    command_word = _pack_command_word(Command.READ_TERMINAL_ID)
+    command_word = pack_command_word(Command.READ_TERMINAL_ID)
 
     response = _execute_read_command(interface, command_word, **kwargs)
 
@@ -209,99 +209,99 @@ def read_terminal_id(interface, **kwargs):
 
 def read_extended_id(interface, **kwargs):
     """Execute a READ_EXTENDED_ID command."""
-    command_word = _pack_command_word(Command.READ_EXTENDED_ID)
+    command_word = pack_command_word(Command.READ_EXTENDED_ID)
 
     return _execute_read_command(interface, command_word, 4, allow_trta_response=True,
                                  **kwargs)
 
 def read_address_counter_hi(interface, **kwargs):
     """Execute a READ_ADDRESS_COUNTER_HI command."""
-    command_word = _pack_command_word(Command.READ_ADDRESS_COUNTER_HI)
+    command_word = pack_command_word(Command.READ_ADDRESS_COUNTER_HI)
 
     return _execute_read_command(interface, command_word, **kwargs)[0]
 
 def read_address_counter_lo(interface, **kwargs):
     """Execute a READ_ADDRESS_COUTER_LO command."""
-    command_word = _pack_command_word(Command.READ_ADDRESS_COUNTER_LO)
+    command_word = pack_command_word(Command.READ_ADDRESS_COUNTER_LO)
 
     return _execute_read_command(interface, command_word, **kwargs)[0]
 
 def read_data(interface, **kwargs):
     """Execute a READ_DATA command."""
-    command_word = _pack_command_word(Command.READ_DATA)
+    command_word = pack_command_word(Command.READ_DATA)
 
     return _execute_read_command(interface, command_word, **kwargs)
 
 def read_multiple(interface, **kwargs):
     """Execute a READ_MULTIPLE command."""
-    command_word = _pack_command_word(Command.READ_MULTIPLE)
+    command_word = pack_command_word(Command.READ_MULTIPLE)
 
     return _execute_read_command(interface, command_word, 32,
                                  validate_response_length=False, **kwargs)
 
 def reset(interface, **kwargs):
     """Execute a RESET command."""
-    command_word = _pack_command_word(Command.RESET)
+    command_word = pack_command_word(Command.RESET)
 
     _execute_write_command(interface, command_word, **kwargs)
 
 def load_control_register(interface, control, **kwargs):
     """Execute a LOAD_CONTROL_REGISTER command."""
-    command_word = _pack_command_word(Command.LOAD_CONTROL_REGISTER)
+    command_word = pack_command_word(Command.LOAD_CONTROL_REGISTER)
 
     _execute_write_command(interface, command_word, bytes([control.value]), **kwargs)
 
 def load_secondary_control(interface, control, **kwargs):
     """Execute a LOAD_SECONDARY_CONTROL command."""
-    command_word = _pack_command_word(Command.LOAD_SECONDARY_CONTROL)
+    command_word = pack_command_word(Command.LOAD_SECONDARY_CONTROL)
 
     _execute_write_command(interface, command_word, bytes([control.value]), **kwargs)
 
 def load_mask(interface, mask, **kwargs):
     """Execute a LOAD_MASK command."""
-    command_word = _pack_command_word(Command.LOAD_MASK)
+    command_word = pack_command_word(Command.LOAD_MASK)
 
     _execute_write_command(interface, command_word, bytes([mask]), **kwargs)
 
 def load_address_counter_hi(interface, address, **kwargs):
     """Execute a LOAD_ADDRESS_COUNTER_HI command."""
-    command_word = _pack_command_word(Command.LOAD_ADDRESS_COUNTER_HI)
+    command_word = pack_command_word(Command.LOAD_ADDRESS_COUNTER_HI)
 
     _execute_write_command(interface, command_word, bytes([address]), **kwargs)
 
 def load_address_counter_lo(interface, address, **kwargs):
     """Execute a LOAD_ADDRESS_COUNTER_LO command."""
-    command_word = _pack_command_word(Command.LOAD_ADDRESS_COUNTER_LO)
+    command_word = pack_command_word(Command.LOAD_ADDRESS_COUNTER_LO)
 
     _execute_write_command(interface, command_word, bytes([address]), **kwargs)
 
 def write_data(interface, data, **kwargs):
     """Execute a WRITE_DATA command."""
-    command_word = _pack_command_word(Command.WRITE_DATA)
+    command_word = pack_command_word(Command.WRITE_DATA)
 
     _execute_write_command(interface, command_word, data, **kwargs)
 
 def clear(interface, pattern, **kwargs):
     """Execute a CLEAR command."""
-    command_word = _pack_command_word(Command.CLEAR)
+    command_word = pack_command_word(Command.CLEAR)
 
     _execute_write_command(interface, command_word, bytes([pattern]), **kwargs)
 
 def search_forward(interface, pattern, **kwargs):
     """Execute a SEARCH_FORWARD command."""
-    command_word = _pack_command_word(Command.SEARCH_FORWARD)
+    command_word = pack_command_word(Command.SEARCH_FORWARD)
 
     _execute_write_command(interface, command_word, bytes([pattern]), **kwargs)
 
 def search_backward(interface, pattern, **kwargs):
     """Execute a SEARCH_BACKWARD command."""
-    command_word = _pack_command_word(Command.SEARCH_BACKWARD)
+    command_word = pack_command_word(Command.SEARCH_BACKWARD)
 
     _execute_write_command(interface, command_word, bytes([pattern]), **kwargs)
 
 def insert_byte(interface, byte, **kwargs):
     """Execute a INSERT_BYTE command."""
-    command_word = _pack_command_word(Command.INSERT_BYTE)
+    command_word = pack_command_word(Command.INSERT_BYTE)
 
     _execute_write_command(interface, command_word, bytes([byte]), **kwargs)
 
@@ -313,41 +313,17 @@ def diagnostic_reset(interface):
     """Execute a DIAGNOSTIC_RESET command."""
     raise NotImplementedError
 
-def _execute_read_command(interface, command_word, response_length=1,
-                          validate_response_length=True, allow_trta_response=False,
-                          trta_value=None, unpack_data_words=True, **kwargs):
-    """Execute a standard read command."""
-    response = interface.execute(command_word, response_length=response_length, **kwargs)
-
-    if allow_trta_response and len(response) == 1 and response[0] == 0:
-        return trta_value
-
-    if validate_response_length and len(response) != response_length:
-        (_, command) = _unpack_command_word(command_word)
-
-        raise ProtocolError(f'Expected {response_length} word {command.name} response')
-
-    return _unpack_data_words(response) if unpack_data_words else response
-
-def _execute_write_command(interface, command_word, data=None, **kwargs):
-    """Execute a standard write command."""
-    response = interface.execute(command_word, data, **kwargs)
-
-    if len(response) != 1:
-        (_, command) = _unpack_command_word(command_word)
-
-        raise ProtocolError(f'Expected 1 word {command.name} response')
-
-    if response[0] != 0:
-        raise ProtocolError('Expected TR/TA response')
-
-def _pack_command_word(command, address=0):
+def pack_command_word(command, address=0):
     """Pack a command and address into a 10-bit command word."""
     return (address << 7) | (command.value << 2) | 0x1
 
-def _unpack_command_word(word):
+def is_command_word(word):
+    """Is command word bit set?"""
+    return (word & 0x1) == 1
+
+def unpack_command_word(word):
     """Unpack a 10-bit command word."""
-    if (word & 0x1) != 1:
+    if not is_command_word(word):
         raise ProtocolError('Word does not have command bit set')
 
     address = (word >> 7) & 0x7
@@ -355,13 +331,13 @@ def _unpack_command_word(word):
 
     return (address, Command(command))
 
-def _unpack_data_words(words, check_parity=False):
-    """Unpack the data bytes from 10-bit data words."""
-    return bytes([_unpack_data_word(word, check_parity=check_parity) for word in words])
+def is_data_word(word):
+    """Is data word bit set?"""
+    return (word & 0x1) == 0
 
-def _unpack_data_word(word, check_parity=False):
+def unpack_data_word(word, check_parity=False):
     """Unpack the data byte from a 10-bit data word."""
-    if (word & 0x1) != 0:
+    if not is_data_word(word):
         raise ProtocolError('Word does not have data bit set')
 
     byte = (word >> 2) & 0xff
@@ -371,3 +347,35 @@ def _unpack_data_word(word, check_parity=False):
         raise ProtocolError('Parity error')
 
     return byte
+
+def unpack_data_words(words, check_parity=False):
+    """Unpack the data bytes from 10-bit data words."""
+    return bytes([unpack_data_word(word, check_parity=check_parity) for word in words])
+
+def _execute_read_command(interface, command_word, response_length=1,
+                          validate_response_length=True, allow_trta_response=False,
+                          trta_value=None, unpack=True, **kwargs):
+    """Execute a standard read command."""
+    response = interface.execute(command_word, response_length=response_length, **kwargs)
+
+    if allow_trta_response and len(response) == 1 and response[0] == 0:
+        return trta_value
+
+    if validate_response_length and len(response) != response_length:
+        (_, command) = unpack_command_word(command_word)
+
+        raise ProtocolError(f'Expected {response_length} word {command.name} response')
+
+    return unpack_data_words(response) if unpack else response
+
+def _execute_write_command(interface, command_word, data=None, **kwargs):
+    """Execute a standard write command."""
+    response = interface.execute(command_word, data, **kwargs)
+
+    if len(response) != 1:
+        (_, command) = unpack_command_word(command_word)
+
+        raise ProtocolError(f'Expected 1 word {command.name} response')
+
+    if response[0] != 0:
+        raise ProtocolError('Expected TR/TA response')
