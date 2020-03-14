@@ -4,7 +4,7 @@ from unittest.mock import Mock
 import context
 
 from coax import PollResponse, KeystrokePollResponse, ProtocolError
-from coax.protocol import Command, Status, TerminalId, Control, SecondaryControl, _execute_read_command, _execute_write_command, _pack_command_word, _unpack_command_word, _unpack_data_words, _unpack_data_word
+from coax.protocol import Command, Status, TerminalId, Control, SecondaryControl, pack_command_word, unpack_command_word, pack_data_word, unpack_data_word, pack_data_words, unpack_data_words, _execute_read_command, _execute_write_command
 
 class PollResponseTestCase(unittest.TestCase):
     def test_is_power_on_reset_complete(self):
@@ -95,13 +95,61 @@ class SecondaryControlTestCase(unittest.TestCase):
 
         self.assertEqual(control.value, 0b00000001)
 
+class PackCommandWordTestCase(unittest.TestCase):
+    def test(self):
+        self.assertEqual(pack_command_word(Command.POLL_ACK), 0b0001000101)
+
+class UnpackCommandWordTestCase(unittest.TestCase):
+    def test(self):
+        # Act
+        command = unpack_command_word(0b0001000101)
+
+        # Assert
+        self.assertEqual(command, Command.POLL_ACK)
+
+    def test_command_bit_not_set_error(self):
+        with self.assertRaisesRegex(ProtocolError, 'Word does not have command bit set'):
+            unpack_command_word(0b0001000100)
+
+class PackDataWordTestCase(unittest.TestCase):
+    def test(self):
+        self.assertEqual(pack_data_word(0x00), 0b0000000010)
+        self.assertEqual(pack_data_word(0x01), 0b0000000100)
+        self.assertEqual(pack_data_word(0xff), 0b1111111110)
+
+    def test_disable_set_parity(self):
+        self.assertEqual(pack_data_word(0x00, set_parity=False), 0b0000000000)
+        self.assertEqual(pack_data_word(0x01, set_parity=False), 0b0000000100)
+        self.assertEqual(pack_data_word(0xff, set_parity=False), 0b1111111100)
+
+class UnpackDataWordTestCase(unittest.TestCase):
+    def test(self):
+        self.assertEqual(unpack_data_word(0b0000000010), 0x00)
+        self.assertEqual(unpack_data_word(0b1111111110), 0xff)
+
+    def test_data_bit_not_set_error(self):
+        with self.assertRaisesRegex(ProtocolError, 'Word does not have data bit set'):
+            unpack_data_word(0b0000000011)
+    
+    def test_parity_error(self):
+        with self.assertRaisesRegex(ProtocolError, 'Parity error'):
+            unpack_data_word(0b0000000000, check_parity=True)
+
+class PackDataWordsTestCase(unittest.TestCase):
+    def test(self):
+        self.assertEqual(pack_data_words(bytes.fromhex('00 ff')), [0b0000000010, 0b1111111110])
+
+class UnpackDataWordsTestCase(unittest.TestCase):
+    def test(self):
+        self.assertEqual(unpack_data_words([0b0000000010, 0b1111111110]), bytes.fromhex('00 ff'))
+
 class ExecuteReadCommandTestCase(unittest.TestCase):
     def setUp(self):
         self.interface = Mock()
 
     def test(self):
         # Arrange
-        command_word = _pack_command_word(Command.READ_TERMINAL_ID)
+        command_word = pack_command_word(Command.READ_TERMINAL_ID)
 
         self.interface.execute = Mock(return_value=[0b0000000010])
 
@@ -110,25 +158,25 @@ class ExecuteReadCommandTestCase(unittest.TestCase):
 
     def test_allow_trta_response(self):
         # Arrange
-        command_word = _pack_command_word(Command.POLL)
+        command_word = pack_command_word(Command.POLL)
 
         self.interface.execute = Mock(return_value=[0b0000000000])
 
         # Act and assert
         self.assertEqual(_execute_read_command(self.interface, command_word, allow_trta_response=True, trta_value='TRTA'), 'TRTA')
 
-    def test_disable_unpack_data_words(self):
+    def test_disable_unpack(self):
         # Arrange
-        command_word = _pack_command_word(Command.POLL)
+        command_word = pack_command_word(Command.POLL)
 
         self.interface.execute = Mock(return_value=[0b1111111110])
 
         # Act and assert
-        self.assertEqual(_execute_read_command(self.interface, command_word, unpack_data_words=False), [0b1111111110])
+        self.assertEqual(_execute_read_command(self.interface, command_word, unpack=False), [0b1111111110])
 
     def test_unexpected_response_length(self):
         # Arrange
-        command_word = _pack_command_word(Command.READ_TERMINAL_ID)
+        command_word = pack_command_word(Command.READ_TERMINAL_ID)
 
         self.interface.execute = Mock(return_value=[])
 
@@ -138,7 +186,7 @@ class ExecuteReadCommandTestCase(unittest.TestCase):
 
     def test_timeout_is_passed_to_interface(self):
         # Arrange
-        command_word = _pack_command_word(Command.READ_TERMINAL_ID)
+        command_word = pack_command_word(Command.READ_TERMINAL_ID)
 
         self.interface.execute = Mock(return_value=[0b0000000010])
 
@@ -154,7 +202,7 @@ class ExecuteWriteCommandTestCase(unittest.TestCase):
 
     def test(self):
         # Arrange
-        command_word = _pack_command_word(Command.WRITE_DATA)
+        command_word = pack_command_word(Command.WRITE_DATA)
 
         self.interface.execute = Mock(return_value=[0b0000000000])
 
@@ -163,7 +211,7 @@ class ExecuteWriteCommandTestCase(unittest.TestCase):
 
     def test_unexpected_response_length(self):
         # Arrange
-        command_word = _pack_command_word(Command.WRITE_DATA)
+        command_word = pack_command_word(Command.WRITE_DATA)
 
         self.interface.execute = Mock(return_value=[])
 
@@ -173,7 +221,7 @@ class ExecuteWriteCommandTestCase(unittest.TestCase):
 
     def test_not_trta_response(self):
         # Arrange
-        command_word = _pack_command_word(Command.WRITE_DATA)
+        command_word = pack_command_word(Command.WRITE_DATA)
 
         self.interface.execute = Mock(return_value=[0b0000000010])
 
@@ -183,7 +231,7 @@ class ExecuteWriteCommandTestCase(unittest.TestCase):
 
     def test_timeout_is_passed_to_interface(self):
         # Arrange
-        command_word = _pack_command_word(Command.WRITE_DATA)
+        command_word = pack_command_word(Command.WRITE_DATA)
 
         self.interface.execute = Mock(return_value=[0b0000000000])
 
@@ -192,51 +240,6 @@ class ExecuteWriteCommandTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(self.interface.execute.call_args[1].get('timeout'), 10)
-
-class PackCommandWordTestCase(unittest.TestCase):
-    def test_without_address(self):
-        self.assertEqual(_pack_command_word(Command.POLL_ACK), 0b0001000101)
-
-    def test_with_address(self):
-        self.assertEqual(_pack_command_word(Command.POLL_ACK, address=7), 0b1111000101)
-
-class UnpackCommandWordTestCase(unittest.TestCase):
-    def test_without_address(self):
-        # Act
-        (address, command) = _unpack_command_word(0b0001000101)
-
-        # Assert
-        self.assertEqual(address, 0)
-        self.assertEqual(command, Command.POLL_ACK)
-
-    def test_with_address(self):
-        # Act
-        (address, command) = _unpack_command_word(0b1111000101)
-
-        # Assert
-        self.assertEqual(address, 7)
-        self.assertEqual(command, Command.POLL_ACK)
-
-    def test_command_bit_not_set_error(self):
-        with self.assertRaisesRegex(ProtocolError, 'Word does not have command bit set'):
-            _unpack_command_word(0b0001000100)
-
-class UnpackDataWordsTestCase(unittest.TestCase):
-    def test(self):
-        self.assertEqual(_unpack_data_words([0b0000000010, 0b1111111110]), bytes.fromhex('00 ff'))
-
-class UnpackDataWordTestCase(unittest.TestCase):
-    def test(self):
-        self.assertEqual(_unpack_data_word(0b0000000010), 0x00)
-        self.assertEqual(_unpack_data_word(0b1111111110), 0xff)
-
-    def test_data_bit_not_set_error(self):
-        with self.assertRaisesRegex(ProtocolError, 'Word does not have data bit set'):
-            _unpack_data_word(0b0000000011)
-    
-    def test_parity_error(self):
-        with self.assertRaisesRegex(ProtocolError, 'Parity error'):
-            _unpack_data_word(0b0000000000, check_parity=True)
 
 if __name__ == '__main__':
     unittest.main()
