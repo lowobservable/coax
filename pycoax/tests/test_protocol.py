@@ -4,7 +4,7 @@ from unittest.mock import Mock
 import context
 
 from coax import PollResponse, KeystrokePollResponse, ProtocolError
-from coax.protocol import Command, Status, TerminalId, Control, SecondaryControl, pack_command_word, unpack_command_word, unpack_data_word, unpack_data_words, _execute_read_command, _execute_write_command
+from coax.protocol import Command, Status, TerminalId, Control, SecondaryControl, pack_command_word, unpack_command_word, pack_data_word, unpack_data_word, pack_data_words, unpack_data_words, _execute_read_command, _execute_write_command
 
 class PollResponseTestCase(unittest.TestCase):
     def test_is_power_on_reset_complete(self):
@@ -111,6 +111,17 @@ class UnpackCommandWordTestCase(unittest.TestCase):
         with self.assertRaisesRegex(ProtocolError, 'Word does not have command bit set'):
             unpack_command_word(0b0001000100)
 
+class PackDataWordTestCase(unittest.TestCase):
+    def test(self):
+        self.assertEqual(pack_data_word(0x00), 0b0000000010)
+        self.assertEqual(pack_data_word(0x01), 0b0000000100)
+        self.assertEqual(pack_data_word(0xff), 0b1111111110)
+
+    def test_disable_set_parity(self):
+        self.assertEqual(pack_data_word(0x00, set_parity=False), 0b0000000000)
+        self.assertEqual(pack_data_word(0x01, set_parity=False), 0b0000000100)
+        self.assertEqual(pack_data_word(0xff, set_parity=False), 0b1111111100)
+
 class UnpackDataWordTestCase(unittest.TestCase):
     def test(self):
         self.assertEqual(unpack_data_word(0b0000000010), 0x00)
@@ -123,6 +134,10 @@ class UnpackDataWordTestCase(unittest.TestCase):
     def test_parity_error(self):
         with self.assertRaisesRegex(ProtocolError, 'Parity error'):
             unpack_data_word(0b0000000000, check_parity=True)
+
+class PackDataWordsTestCase(unittest.TestCase):
+    def test(self):
+        self.assertEqual(pack_data_words(bytes.fromhex('00 ff')), [0b0000000010, 0b1111111110])
 
 class UnpackDataWordsTestCase(unittest.TestCase):
     def test(self):

@@ -330,6 +330,12 @@ def unpack_command_word(word):
 
     return Command(command)
 
+def pack_data_word(byte, set_parity=True):
+    """Pack a data byte into a 10-bit data word."""
+    parity = odd_parity(byte) if set_parity else 0
+
+    return (byte << 2) | (parity << 1)
+
 def is_data_word(word):
     """Is data word bit set?"""
     return (word & 0x1) == 0
@@ -346,6 +352,10 @@ def unpack_data_word(word, check_parity=False):
         raise ProtocolError('Parity error')
 
     return byte
+
+def pack_data_words(bytes_, set_parity=True):
+    """Pack data bytes into 10-bit data words."""
+    return [pack_data_word(byte, set_parity=set_parity) for byte in bytes_]
 
 def unpack_data_words(words, check_parity=False):
     """Unpack the data bytes from 10-bit data words."""
