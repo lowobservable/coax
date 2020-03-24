@@ -17,14 +17,12 @@
 #include "CoaxTransceiver.h"
 
 #define COMMAND_RESET 0x01
-#define COMMAND_EXECUTE 0x02
-#define COMMAND_EXECUTE_OFFLOAD 0x03
+#define COMMAND_TRANSMIT 0x02
+#define COMMAND_RECEIVE 0x04
+#define COMMAND_TRANSMIT_RECEIVE 0x06
 
 #define ERROR_INVALID_MESSAGE 1
 #define ERROR_UNKNOWN_COMMAND 2
-#define ERROR_UNKNOWN_OFFLOAD_COMMAND 3
-
-#define UNPACK_DATA_WORD(w) (uint8_t) ((w >> 2) & 0xff)
 
 void handleResetCommand(uint8_t *buffer, int bufferCount) {
   uint8_t response[] = { 0x01, 0x00, 0x00, 0x01 };
@@ -32,22 +30,44 @@ void handleResetCommand(uint8_t *buffer, int bufferCount) {
   sendMessage(response, 4);
 }
 
-void handleExecuteCommand(uint8_t *buffer, int bufferCount) {
+void handleTransmitReceiveCommand(uint8_t *buffer, int bufferCount) {
   if (bufferCount < 6) {
     sendErrorMessage(ERROR_INVALID_MESSAGE);
     return;
   }
   
-  uint16_t commandWord = (buffer[0] << 8) | buffer[1];
-  uint16_t receiveCount = (buffer[2] << 8) | buffer[3];
-  uint16_t timeout = (buffer[4] << 8) | buffer[5];
+  uint16_t transmitRepeatCount = ((buffer[0] << 8) | buffer[1]) & 0x7fff;
+  uint16_t transmitRepeatOffset = buffer[0] >> 7;
 
-  uint8_t *dataBuffer = buffer + 6;
-  uint16_t dataBufferCount = bufferCount - 6;
+  uint16_t *transmitBuffer = (uint16_t *) (buffer + 2);
+  uint16_t transmitBufferCount = (bufferCount - 6) / 2;
+
+  uint16_t receiveBufferSize = (buffer[bufferCount - 4] << 8) | buffer[bufferCount - 3];
+  uint16_t receiveTimeout = (buffer[bufferCount - 2] << 8) | buffer[bufferCount - 1];
+
+  if (transmitBufferCount < 1) {
+    sendErrorMessage(ERROR_INVALID_MESSAGE);
+    return;
+  }
+
+  // Expand the provided data if applicable.
+  if (transmitRepeatCount > 1) {
+    uint8_t *source = ((uint8_t *) transmitBuffer) + (transmitRepeatOffset * 2);
+    uint8_t *destination = ((uint8_t *) transmitBuffer) + (transmitBufferCount * 2);
+    size_t length = (transmitBufferCount - transmitRepeatOffset) * 2;
+
+    for (int index = 1; index < transmitRepeatCount; index++) {
+      memcpy(destination, source, length);
+
+      transmitBufferCount += (transmitBufferCount - transmitRepeatOffset);
+
+      destination += length;
+    }
+  }
 
   uint16_t *receiveBuffer = (uint16_t *) (buffer + 2);
-  
-  bufferCount = CoaxTransceiver::transmitReceive(commandWord, dataBuffer, dataBufferCount, receiveBuffer, receiveCount, timeout);
+
+  bufferCount = CoaxTransceiver::transmitReceive(transmitBuffer, transmitBufferCount, receiveBuffer, receiveBufferSize, receiveTimeout);
 
   if (bufferCount < 0) {
     sendErrorMessage(100 + ((-1) * bufferCount));
@@ -62,113 +82,6 @@ void handleExecuteCommand(uint8_t *buffer, int bufferCount) {
   sendMessage(buffer + 1, bufferCount);
 }
 
-void handleExecuteOffloadCommand(uint8_t *buffer, int bufferCount) {
-  if (bufferCount < 1) {
-    sendErrorMessage(ERROR_INVALID_MESSAGE);
-    return;
-  }
-
-  uint8_t command = buffer[0];
-
-  if (command == 0x01) {
-    handleOffloadLoadAddressCounter(buffer + 1, bufferCount - 1);
-  } else if (command == 0x02) {
-    handleOffloadWrite(buffer + 1, bufferCount - 1);
-  } else {
-    sendErrorMessage(ERROR_UNKNOWN_OFFLOAD_COMMAND);
-  }
-}
-
-void handleOffloadLoadAddressCounter(uint8_t *buffer, int bufferCount) {
-  uint16_t response;
-  
-  if (bufferCount < 2) {
-    sendErrorMessage(ERROR_INVALID_MESSAGE);
-    return;
-  }
-
-  uint8_t hi = buffer[0];
-  uint8_t lo = buffer[1];
-  
-  // TODO: error handling...
-  CoaxTransceiver::transmitReceive(/* LOAD_ADDRESS_COUNTER_HI */ 0x11, &hi, 1, &response, 1, 0);
-  CoaxTransceiver::transmitReceive(/* LOAD_ADDRESS_COUNTER_LO */ 0x51, &lo, 1, &response, 1, 0);
-
-  // Send the response message.
-  uint8_t message[] = { 0x01 };
-  
-  sendMessage(message, 1);
-}
-
-void handleOffloadWrite(uint8_t *buffer, int bufferCount) {
-  uint16_t response;
-  
-  if (bufferCount < 5) {
-    sendErrorMessage(ERROR_INVALID_MESSAGE);
-    return;
-  }
-
-  uint8_t addressHi = buffer[0];
-  uint8_t addressLo = buffer[1];
-  bool restoreOriginalAddress = buffer[2];
-  uint16_t repeatCount = (buffer[3] << 8) | buffer[4];
-
-  uint8_t *dataBuffer = buffer + 5;
-  uint16_t dataBufferCount = bufferCount - 5;
-  
-  if (dataBufferCount < 1) {
-    sendErrorMessage(ERROR_INVALID_MESSAGE);
-    return;
-  }
-
-  // Repeat the provided data if applicable.
-  if (repeatCount > 0) {
-    uint16_t dataBufferIndex = dataBufferCount;
-
-    for (int repeatIndex = 0; repeatIndex < repeatCount; repeatIndex++) {
-      for (int index = 0; index < dataBufferCount; index++) {
-        dataBuffer[dataBufferIndex++] = dataBuffer[index];
-      }
-    }
-
-    dataBufferCount *= (repeatCount + 1);
-  }
-  
-  // Store original address if applicable.
-  uint8_t originalAddressHi;
-  uint8_t originalAddressLo;
-
-  if (restoreOriginalAddress) {
-    CoaxTransceiver::transmitReceive(/* READ_ADDRESS_COUNTER_HI */ 0x15, NULL, 0, &response, 1, 0);
-
-    originalAddressHi = UNPACK_DATA_WORD(response);
-
-    CoaxTransceiver::transmitReceive(/* READ_ADDRESS_COUNTER_LO */ 0x55, NULL, 0, &response, 1, 0);
-    
-    originalAddressLo = UNPACK_DATA_WORD(response);
-  }
-
-  // Move to start address if applicable.
-  if (!(addressHi == 0xff && addressLo == 0xff)) {
-    CoaxTransceiver::transmitReceive(/* LOAD_ADDRESS_COUNTER_HI */ 0x11, &addressHi, 1, &response, 1, 0);
-    CoaxTransceiver::transmitReceive(/* LOAD_ADDRESS_COUNTER_LO */ 0x51, &addressLo, 1, &response, 1, 0);
-  }
-
-  // Write buffer.
-  CoaxTransceiver::transmitReceive(/* WRITE_DATA */ 0x31, dataBuffer, dataBufferCount, &response, 1, 0);
-
-  // Restore original address if applicable.
-  if (restoreOriginalAddress) {
-    CoaxTransceiver::transmitReceive(/* LOAD_ADDRESS_COUNTER_HI */ 0x11, &originalAddressHi, 1, &response, 1, 0);
-    CoaxTransceiver::transmitReceive(/* LOAD_ADDRESS_COUNTER_LO */ 0x51, &originalAddressLo, 1, &response, 1, 0);
-  }
-
-  // Send the response message.
-  uint8_t message[] = { 0x01 };
-  
-  sendMessage(message, 1);
-}
-
 void handleMessage(uint8_t *buffer, int bufferCount) {
   if (bufferCount < 1) {
     sendErrorMessage(ERROR_INVALID_MESSAGE);
@@ -179,10 +92,8 @@ void handleMessage(uint8_t *buffer, int bufferCount) {
 
   if (command == COMMAND_RESET) {
     handleResetCommand(buffer + 1, bufferCount - 1);
-  } else if (command == COMMAND_EXECUTE) {
-    handleExecuteCommand(buffer + 1, bufferCount - 1);
-  } else if (command == COMMAND_EXECUTE_OFFLOAD) {
-    handleExecuteOffloadCommand(buffer + 1, bufferCount - 1);
+  } else if (command == COMMAND_TRANSMIT_RECEIVE) {
+    handleTransmitReceiveCommand(buffer + 1, bufferCount - 1);
   } else {
     sendErrorMessage(ERROR_UNKNOWN_COMMAND);
   }
@@ -199,7 +110,7 @@ enum {
   ESCAPE
 } frameState;
 
-#define FRAME_BUFFER_SIZE (25 * 80) + 32
+#define FRAME_BUFFER_SIZE ((25 * 80) * 2) + 32
 
 uint8_t frameBuffer[FRAME_BUFFER_SIZE];
 int frameBufferCount = 0;

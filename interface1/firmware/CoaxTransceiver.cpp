@@ -85,14 +85,14 @@ static void CoaxTransceiver::setup() {
   txSetup();
 }
 
-static int /* ssize_t */ CoaxTransceiver::transmitReceive(uint16_t commandWord, uint8_t *dataBuffer, size_t dataBufferCount, uint16_t *receiveBuffer, size_t receiveBufferSize, uint16_t timeout) {
-  int returnValue = transmit(commandWord, dataBuffer, dataBufferCount);
+static int /* ssize_t */ CoaxTransceiver::transmitReceive(uint16_t *transmitBuffer, size_t transmitBufferCount, uint16_t *receiveBuffer, size_t receiveBufferSize, uint16_t receiveTimeout) {
+  int returnValue = transmit(transmitBuffer, transmitBufferCount);
 
   if (returnValue < 0) {
     return returnValue;
   }
 
-  return receive(receiveBuffer, receiveBufferSize, timeout);
+  return receive(receiveBuffer, receiveBufferSize, receiveTimeout);
 }
 
 static void CoaxTransceiver::dataBusSetup() {
@@ -158,7 +158,7 @@ static void CoaxTransceiver::txSetup() {
   pinMode(TX_REGISTERS_FULL_PIN, INPUT);
 }
 
-static int /* ssize_t */ CoaxTransceiver::transmit(uint16_t commandWord, uint8_t *dataBuffer, size_t dataCount) {
+static int /* ssize_t */ CoaxTransceiver::transmit(uint16_t *buffer, size_t bufferCount) {
   // Ensure receiver is inactive.
   if (rxState != RX_STATE_DISABLED) {
     return ERROR_TX_RECEIVER_ACTIVE;
@@ -178,35 +178,20 @@ static int /* ssize_t */ CoaxTransceiver::transmit(uint16_t commandWord, uint8_t
   DDRA = B11111111;
   DDRC = B00000011;
 
-  // Send command word - we make an assumption here that TX_REGISTERS_FULL is not set.
-  PORTC = (PINC & 0xfc) | ((commandWord >> 8) & 0x3);
-  PORTA = commandWord & 0xff;
-
-  PORTE &= ~0x20; // TX Register Load - Low (Load)
-  PORTE |=  0x20; // TX Register Load - High
-
-  // Send data - offload parity computation to DP8340.
-  if (dataCount > 0) {
-    // Enable transmitter parity calculation.
-    PORTH &= ~0x08; // TX Parity Control - Low
+  // Transmit.
+  for (int index = 0; index < bufferCount; index++) {
+    uint16_t data = buffer[index];
     
-    for (int index = 0; index < dataCount; index++) {
-      // Wait while TX Registers Full is high.
-      while ( (PING & 0x20) == 0x20) {
-        NOP;
-      }
-      
-      uint8_t data = dataBuffer[index];
-
-      PORTC = (PINC & 0xfc) | ((data >> 6) & 0x3);
-      PORTA = (data << 2);
-
-      PORTE &= ~0x20; // TX Register Load - Low (Load)
-      PORTE |=  0x20; // TX Register Load - High
+    // Wait while TX Registers Full is high.
+    while ((PING & 0x20) == 0x20) {
+      NOP;
     }
 
-    // Disable transmitter parity calculation.
-    PORTH |= 0x08; // TX Parity Control - High
+    PORTC = (PINC & 0xfc) | ((data >> 8) & 0x3);
+    PORTA = data & 0xff;
+
+    PORTE &= ~0x20; // TX Register Load - Low (Load)
+    PORTE |= 0x20; // TX Register Load - High
   }
 
   // Configure data bus for input.
@@ -219,7 +204,7 @@ static int /* ssize_t */ CoaxTransceiver::transmit(uint16_t commandWord, uint8_t
   // Enable interrupts.
   interrupts();
 
-  return dataCount;
+  return bufferCount;
 }
 
 static int /* ssize_t */ CoaxTransceiver::receive(uint16_t *buffer, size_t bufferSize, uint16_t timeout) {

@@ -151,7 +151,7 @@ class ExecuteReadCommandTestCase(unittest.TestCase):
         # Arrange
         command_word = pack_command_word(Command.READ_TERMINAL_ID)
 
-        self.interface.execute = Mock(return_value=[0b0000000010])
+        self.interface.transmit_receive = Mock(return_value=[0b0000000010])
 
         # Act and assert
         self.assertEqual(_execute_read_command(self.interface, command_word), bytes.fromhex('00'))
@@ -160,7 +160,7 @@ class ExecuteReadCommandTestCase(unittest.TestCase):
         # Arrange
         command_word = pack_command_word(Command.POLL)
 
-        self.interface.execute = Mock(return_value=[0b0000000000])
+        self.interface.transmit_receive = Mock(return_value=[0b0000000000])
 
         # Act and assert
         self.assertEqual(_execute_read_command(self.interface, command_word, allow_trta_response=True, trta_value='TRTA'), 'TRTA')
@@ -169,7 +169,7 @@ class ExecuteReadCommandTestCase(unittest.TestCase):
         # Arrange
         command_word = pack_command_word(Command.POLL)
 
-        self.interface.execute = Mock(return_value=[0b1111111110])
+        self.interface.transmit_receive = Mock(return_value=[0b1111111110])
 
         # Act and assert
         self.assertEqual(_execute_read_command(self.interface, command_word, unpack=False), [0b1111111110])
@@ -178,23 +178,23 @@ class ExecuteReadCommandTestCase(unittest.TestCase):
         # Arrange
         command_word = pack_command_word(Command.READ_TERMINAL_ID)
 
-        self.interface.execute = Mock(return_value=[])
+        self.interface.transmit_receive = Mock(return_value=[])
 
         # Act and assert
         with self.assertRaisesRegex(ProtocolError, 'Expected 1 word READ_TERMINAL_ID response'):
             _execute_read_command(self.interface, command_word)
 
-    def test_timeout_is_passed_to_interface(self):
+    def test_receive_timeout_is_passed_to_interface(self):
         # Arrange
         command_word = pack_command_word(Command.READ_TERMINAL_ID)
 
-        self.interface.execute = Mock(return_value=[0b0000000010])
+        self.interface.transmit_receive = Mock(return_value=[0b0000000010])
 
         # Act
-        _execute_read_command(self.interface, command_word, timeout=10)
+        _execute_read_command(self.interface, command_word, receive_timeout=10)
 
         # Assert
-        self.assertEqual(self.interface.execute.call_args[1].get('timeout'), 10)
+        self.assertEqual(self.interface.transmit_receive.call_args[1].get('receive_timeout'), 10)
 
 class ExecuteWriteCommandTestCase(unittest.TestCase):
     def setUp(self):
@@ -204,7 +204,7 @@ class ExecuteWriteCommandTestCase(unittest.TestCase):
         # Arrange
         command_word = pack_command_word(Command.WRITE_DATA)
 
-        self.interface.execute = Mock(return_value=[0b0000000000])
+        self.interface.transmit_receive = Mock(return_value=[0b0000000000])
 
         # Act and assert
         _execute_write_command(self.interface, command_word, bytes.fromhex('de ad be ef'))
@@ -213,7 +213,7 @@ class ExecuteWriteCommandTestCase(unittest.TestCase):
         # Arrange
         command_word = pack_command_word(Command.WRITE_DATA)
 
-        self.interface.execute = Mock(return_value=[])
+        self.interface.transmit_receive = Mock(return_value=[])
 
         # Act and assert
         with self.assertRaisesRegex(ProtocolError, 'Expected 1 word WRITE_DATA response'):
@@ -223,23 +223,23 @@ class ExecuteWriteCommandTestCase(unittest.TestCase):
         # Arrange
         command_word = pack_command_word(Command.WRITE_DATA)
 
-        self.interface.execute = Mock(return_value=[0b0000000010])
+        self.interface.transmit_receive = Mock(return_value=[0b0000000010])
 
         # Act and assert
         with self.assertRaisesRegex(ProtocolError, 'Expected TR/TA response'):
             _execute_write_command(self.interface, command_word, bytes.fromhex('de ad be ef'))
 
-    def test_timeout_is_passed_to_interface(self):
+    def test_receive_timeout_is_passed_to_interface(self):
         # Arrange
         command_word = pack_command_word(Command.WRITE_DATA)
 
-        self.interface.execute = Mock(return_value=[0b0000000000])
+        self.interface.transmit_receive = Mock(return_value=[0b0000000000])
 
         # Assert
-        _execute_write_command(self.interface, command_word, bytes.fromhex('de ad be ef'), timeout=10)
+        _execute_write_command(self.interface, command_word, bytes.fromhex('de ad be ef'), receive_timeout=10)
 
         # Assert
-        self.assertEqual(self.interface.execute.call_args[1].get('timeout'), 10)
+        self.assertEqual(self.interface.transmit_receive.call_args[1].get('receive_timeout'), 10)
 
 if __name__ == '__main__':
     unittest.main()
