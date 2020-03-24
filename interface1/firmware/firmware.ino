@@ -35,12 +35,12 @@ void handleTransmitReceiveCommand(uint8_t *buffer, int bufferCount) {
     sendErrorMessage(ERROR_INVALID_MESSAGE);
     return;
   }
-  
-  uint16_t transmitRepeatCount = ((buffer[0] << 8) | buffer[1]) & 0x7fff;
-  uint16_t transmitRepeatOffset = buffer[0] >> 7;
 
   uint16_t *transmitBuffer = (uint16_t *) (buffer + 2);
   uint16_t transmitBufferCount = (bufferCount - 6) / 2;
+
+  uint16_t transmitRepeatCount = ((buffer[0] << 8) | buffer[1]) & 0x7fff;
+  uint16_t transmitRepeatOffset = buffer[0] >> 7;
 
   uint16_t receiveBufferSize = (buffer[bufferCount - 4] << 8) | buffer[bufferCount - 3];
   uint16_t receiveTimeout = (buffer[bufferCount - 2] << 8) | buffer[bufferCount - 1];
@@ -54,12 +54,15 @@ void handleTransmitReceiveCommand(uint8_t *buffer, int bufferCount) {
   if (transmitRepeatCount > 1) {
     uint8_t *source = ((uint8_t *) transmitBuffer) + (transmitRepeatOffset * 2);
     uint8_t *destination = ((uint8_t *) transmitBuffer) + (transmitBufferCount * 2);
-    size_t length = (transmitBufferCount - transmitRepeatOffset) * 2;
+
+    uint16_t sourceCount = transmitBufferCount - transmitRepeatOffset;
+
+    size_t length = sourceCount * 2;
 
     for (int index = 1; index < transmitRepeatCount; index++) {
       memcpy(destination, source, length);
 
-      transmitBufferCount += (transmitBufferCount - transmitRepeatOffset);
+      transmitBufferCount += sourceCount;
 
       destination += length;
     }
