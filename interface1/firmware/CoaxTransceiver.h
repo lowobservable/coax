@@ -19,6 +19,7 @@
 #define ERROR_TX_RECEIVER_ACTIVE -1
 #define ERROR_RX_TIMEOUT -2
 #define ERROR_RX_OVERFLOW -3
+#define ERROR_RX_RECEIVER -4
 
 class CoaxTransceiver {
   public:

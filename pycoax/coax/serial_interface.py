@@ -150,7 +150,8 @@ ERROR_MAP = {
 
     101: InterfaceError('Receiver active'),
     102: ReceiveTimeout(),
-    103: ReceiveError('Receiver buffer overflow')
+    103: ReceiveError('Receiver buffer overflow'),
+    104: ReceiveError('Receiver error')
 }
 
 def _convert_error(message):

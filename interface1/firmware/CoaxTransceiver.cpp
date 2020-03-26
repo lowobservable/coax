@@ -229,9 +229,22 @@ static int /* ssize_t */ CoaxTransceiver::receive(uint16_t *buffer, size_t buffe
     NOP;
   }
 
+  uint16_t count = rxBufferCount;
+
   rxState = RX_STATE_DISABLED;
 
-  return rxBufferCount;
+  if (count < 0) {
+      return count;
+  }
+
+  // Check for receiver errors.
+  for (int index = 0; index < count; index++) {
+      if (buffer[index] & 0x8000) {
+          return ERROR_RX_RECEIVER;
+      }
+  }
+
+  return count;
 }
 
 static void CoaxTransceiver::rxActiveInterrupt() {
