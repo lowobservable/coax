@@ -2,8 +2,6 @@ from .__about__ import __version__
 
 from .serial_interface import SerialInterface
 
-from .serial_interface import SerialInterface
-
 from .protocol import (
     PollAction,
     PollResponse,
