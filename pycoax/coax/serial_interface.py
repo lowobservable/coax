@@ -45,7 +45,7 @@ class SerialInterface(Interface):
     def transmit(self, words, repeat_count=None, repeat_offset=1):
         message = bytes([0x02])
 
-        message += _pack_transmit_header(len(words), repeat_count, repeat_offset)
+        message += _pack_transmit_header(repeat_count, repeat_offset)
         message += _pack_transmit_data(words)
 
         self._write_message(message)
@@ -69,7 +69,7 @@ class SerialInterface(Interface):
         if message[0] != 0x01:
             raise _convert_error(message)
 
-        return _unpack_receive_response(message[1:])
+        return _unpack_receive_data(message[1:])
 
     def transmit_receive(self, transmit_words, transmit_repeat_count=None,
                          transmit_repeat_offset=1, receive_length=None,
@@ -78,8 +78,7 @@ class SerialInterface(Interface):
 
         message = bytes([0x06])
 
-        message += _pack_transmit_header(len(transmit_words), transmit_repeat_count,
-                                         transmit_repeat_offset)
+        message += _pack_transmit_header(transmit_repeat_count, transmit_repeat_offset)
         message += _pack_transmit_data(transmit_words)
         message += _pack_receive_header(receive_length, timeout_milliseconds)
 
@@ -90,7 +89,7 @@ class SerialInterface(Interface):
         if message[0] != 0x01:
             raise _convert_error(message)
 
-        return _unpack_receive_response(message[1:])
+        return _unpack_receive_data(message[1:])
 
     def _calculate_timeout_milliseconds(self, timeout):
         milliseconds = 0
@@ -112,7 +111,7 @@ class SerialInterface(Interface):
         if len(message) < 4:
             raise InterfaceError('Invalid response message')
 
-        (length,) = struct.unpack(">H", message[:2])
+        (length,) = struct.unpack('>H', message[:2])
 
         if length != len(message) - 4:
             raise InterfaceError('Response message length mismatch')
@@ -123,30 +122,47 @@ class SerialInterface(Interface):
         return message[2:-2]
 
     def _write_message(self, message):
-        self.slip_serial.send_msg(struct.pack(">H", len(message)) + message +
-                                  struct.pack(">H", 0))
+        self.slip_serial.send_msg(struct.pack('>H', len(message)) + message +
+                                  struct.pack('>H', 0))
 
-def _pack_transmit_header(length, repeat_count, repeat_offset):
+def _pack_transmit_header(repeat_count, repeat_offset):
     repeat = ((repeat_offset << 15) | repeat_count) if repeat_count else 0
 
-    return struct.pack(">HH", length, repeat)
+    return struct.pack('>H', repeat)
 
 def _pack_transmit_data(words):
     bytes_ = bytearray()
 
     for word in words:
-        bytes_ += struct.pack(">H", word)
+        bytes_ += struct.pack('<H', word)
 
     return bytes_
 
 def _pack_receive_header(length, timeout_milliseconds):
-    return struct.pack(">HH", length or 0, timeout_milliseconds)
+    return struct.pack('>HH', length or 0, timeout_milliseconds)
 
-def _unpack_receive_response(message):
-    pass
+def _unpack_receive_data(bytes_):
+    return [(hi << 8) | lo for (lo, hi) in zip(bytes_[::2], bytes_[1::2])]
+
+ERROR_MAP = {
+    1: InterfaceError('Invalid request message'),
+    2: InterfaceError('Unknown command'),
+
+    101: InterfaceError('Receiver active'),
+    102: ReceiveTimeout(),
+    103: ReceiveError('Receiver buffer overflow'),
+    104: ReceiveError('Receiver error')
+}
 
 def _convert_error(message):
-    # TODO
+    if message[0] != 0x02:
+        return InterfaceError('Invalid response')
+
+    if len(message) < 2:
+        return InterfaceError('Invalid error response')
+
+    if message[1] in ERROR_MAP:
+        return ERROR_MAP[message[1]]
 
     return InterfaceError('Unknown error')
 

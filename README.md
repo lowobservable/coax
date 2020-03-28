@@ -1,8 +1,8 @@
-# coax-interface
+# coax
 
 > Hello mainframe!
 
-coax-interface is a set of tools for interfacing with [IBM 3270](https://en.wikipedia.org/wiki/IBM_3270) type terminals.
+Tools for interfacing with [IBM 3270](https://en.wikipedia.org/wiki/IBM_3270) type terminals.
 
 ## Contents
 

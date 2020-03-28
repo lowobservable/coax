@@ -1,29 +1,13 @@
 #!/usr/bin/env python
 
-import sys
-import time
-from serial import Serial
+from common import create_serial, create_interface
 
-sys.path.append('..')
-
-from coax import Interface1, read_address_counter_hi, read_address_counter_lo, load_address_counter_hi, load_address_counter_lo, write_data
+from coax import read_address_counter_hi, read_address_counter_lo, load_address_counter_hi, load_address_counter_lo, write_data
 
 DIGIT_MAP = [0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x80, 0x81, 0x82, 0x83, 0x84, 0x85]
 
-print('Opening serial port...')
-
-with Serial('/dev/ttyUSB0', 115200) as serial:
-    print('Sleeping to allow interface time to wake up...')
-
-    time.sleep(3)
-
-    interface = Interface1(serial)
-
-    print('Resetting interface...')
-
-    version = interface.reset()
-
-    print(f'Firmware version is {version}')
+with create_serial() as serial:
+    interface = create_interface(serial)
 
     print('LOAD_ADDRESS_COUNTER_HI...')
 

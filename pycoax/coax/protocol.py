@@ -365,7 +365,8 @@ def _execute_read_command(interface, command_word, response_length=1,
                           validate_response_length=True, allow_trta_response=False,
                           trta_value=None, unpack=True, **kwargs):
     """Execute a standard read command."""
-    response = interface.execute(command_word, response_length=response_length, **kwargs)
+    response = interface.transmit_receive([command_word], receive_length=response_length,
+                                          **kwargs)
 
     if allow_trta_response and len(response) == 1 and response[0] == 0:
         return trta_value
@@ -379,7 +380,18 @@ def _execute_read_command(interface, command_word, response_length=1,
 
 def _execute_write_command(interface, command_word, data=None, **kwargs):
     """Execute a standard write command."""
-    response = interface.execute(command_word, data, **kwargs)
+    data_words = []
+    transmit_repeat_count = None
+
+    if isinstance(data, tuple):
+        data_words = pack_data_words(data[0])
+        transmit_repeat_count = data[1]
+    elif data is not None:
+        data_words = pack_data_words(data)
+
+    response = interface.transmit_receive([command_word, *data_words],
+                                          transmit_repeat_count,
+                                          receive_length=1, **kwargs)
 
     if len(response) != 1:
         command = unpack_command_word(command_word)

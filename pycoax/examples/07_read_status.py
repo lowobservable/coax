@@ -1,27 +1,11 @@
 #!/usr/bin/env python
 
-import sys
-import time
-from serial import Serial
+from common import create_serial, create_interface
 
-sys.path.append('..')
+from coax import read_status
 
-from coax import Interface1, read_status
-
-print('Opening serial port...')
-
-with Serial('/dev/ttyUSB0', 115200) as serial:
-    print('Sleeping to allow interface time to wake up...')
-
-    time.sleep(3)
-
-    interface = Interface1(serial)
-
-    print('Resetting interface...')
-
-    version = interface.reset()
-
-    print(f'Firmware version is {version}')
+with create_serial() as serial:
+    interface = create_interface(serial)
 
     print('READ_STATUS...')
 

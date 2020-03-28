@@ -10,14 +10,14 @@ LONG_DESCRIPTION = """# pycoax
 
 Python IBM 3270 coaxial interface library.
 
-See [GitHub](https://github.com/lowobservable/coax-interface#readme) for more information.
+See [GitHub](https://github.com/lowobservable/coax#readme) for more information.
 """
 
 setup(
     name='pycoax',
     version=ABOUT['__version__'],
     description='IBM 3270 coaxial interface',
-    url='https://github.com/lowobservable/coax-interface',
+    url='https://github.com/lowobservable/coax',
     author='Andrew Kay',
     author_email='projects@ajk.me',
     packages=['coax'],

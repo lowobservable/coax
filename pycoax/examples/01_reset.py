@@ -1,21 +1,9 @@
 #!/usr/bin/env python
 
-import sys
-import time
-from serial import Serial
+from common import create_serial, create_interface
 
-sys.path.append('..')
-
-from coax import Interface1, poll, poll_ack
-
-print('Opening serial port...')
-
-with Serial('/dev/ttyUSB0', 115200) as serial:
-    print('Sleeping to allow interface time to wake up...')
-
-    time.sleep(3)
-
-    interface = Interface1(serial)
+with create_serial() as serial:
+    interface = create_interface(serial, reset=False, poll_flush=False)
 
     print('Resetting interface...')
 
