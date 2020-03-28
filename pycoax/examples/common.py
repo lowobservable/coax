@@ -1,15 +1,16 @@
 import sys
 import time
+import os
 from serial import Serial
 
 sys.path.append('..')
 
 from coax import SerialInterface, poll, poll_ack
 
-SERIAL_PORT = '/dev/ttyACM0'
+DEFAULT_SERIAL_PORT = '/dev/ttyACM0'
 
 def create_serial():
-    port = SERIAL_PORT
+    port = os.environ.get('COAX_PORT', DEFAULT_SERIAL_PORT)
 
     print(f'Opening {port}...')
 
