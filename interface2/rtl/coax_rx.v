@@ -3,6 +3,7 @@
 module coax_rx (
     input clk,
     input rx,
+    input enable,
     input data_read,
     output active,
     output reg [9:0] data = 10'b0,
@@ -37,7 +38,7 @@ module coax_rx (
     wire bit_timer_enable;
     wire bit_timer_sample;
 
-    assign bit_timer_enable = (state != CODE_VIOLATION_1A && state != CODE_VIOLATION_3B);
+    assign bit_timer_enable = (enable && state != CODE_VIOLATION_1A && state != CODE_VIOLATION_3B);
 
     coax_rx_bit_timer #(
         .CLOCKS_PER_BIT(CLOCKS_PER_BIT)
@@ -104,35 +105,46 @@ module coax_rx (
         rx_0 <= rx;
         rx_1 <= rx_0;
 
-        if (data_read && data_available)
+        if (enable)
+        begin
+            if (data_read && data_available)
+                data_available <= 0;
+
+            if (state == DATA)
+            begin
+                if (state != previous_state)
+                begin
+                    input_data <= 10'b0;
+                    input_data_counter <= 0;
+
+                    parity_bit <= 1; // Even parity includes sync bit
+                end
+                else if (bit_timer_sample)
+                begin
+                    input_data <= { input_data[8:0], rx_1 };
+                    input_data_counter <= input_data_counter + 1;
+
+                    if (rx_1)
+                        parity_bit <= ~parity_bit;
+                end
+            end
+            else if (state == END_1 && state != previous_state)
+            begin
+                data <= input_data;
+                data_available <= 1;
+            end
+
+            state <= next_state;
+            previous_state <= state;
+        end
+        else
+        begin
+            state <= IDLE;
+            previous_state <= IDLE;
+
+            data <= 10'b0;
             data_available <= 0;
-
-        if (state == DATA)
-        begin
-            if (state != previous_state)
-            begin
-                input_data <= 10'b0;
-                input_data_counter <= 0;
-
-                parity_bit <= 1; // Even parity includes sync bit
-            end
-            else if (bit_timer_sample)
-            begin
-                input_data <= { input_data[8:0], rx_1 };
-                input_data_counter <= input_data_counter + 1;
-
-                if (rx_1)
-                    parity_bit <= ~parity_bit;
-            end
         end
-        else if (state == END_1 && state != previous_state)
-        begin
-            data <= input_data;
-            data_available <= 1;
-        end
-
-        state <= next_state;
-        previous_state <= state;
     end
 
     assign active = (state >= SYNC_BIT && state <= END_1);

@@ -65,6 +65,7 @@ module top (
     ) coax_rx (
         .clk(clk_19mhz),
         .rx(rx),
+        .enable(rx_enable && !tx_active),
         .active(rx_active),
         .data(rx_data),
         .data_available(rx_data_available),
