@@ -21,7 +21,7 @@ setup(
     author='Andrew Kay',
     author_email='projects@ajk.me',
     packages=['coax'],
-    install_requires=['pyserial==3.4', 'sliplib==0.3.0'],
+    install_requires=['pyserial==3.4', 'sliplib==0.5.0'],
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
     classifiers=[
