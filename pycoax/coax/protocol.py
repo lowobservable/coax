@@ -97,6 +97,12 @@ class Status:
                 f'feature_error={self.feature_error}, '
                 f'operation_complete={self.operation_complete}>')
 
+class TerminalType(Enum):
+    """Terminal type."""
+
+    CUT = 1
+    DFT = 2
+
 class TerminalId:
     """Terminal model and keyboard."""
 
@@ -108,21 +114,28 @@ class TerminalId:
     }
 
     def __init__(self, value):
-        if (value & 0x1) != 0:
-            raise ValueError('Invalid terminal identifier')
-
         self.value = value
 
-        model = (value & 0x0e) >> 1
+        if (value & 0x1) == 0:
+            self.type = TerminalType.CUT
 
-        if model not in TerminalId._MODEL_MAP:
-            raise ValueError('Invalid model')
+            model = (value & 0x0e) >> 1
 
-        self.model = TerminalId._MODEL_MAP[model]
-        self.keyboard = (value & 0xf0) >> 4
+            if model not in TerminalId._MODEL_MAP:
+                raise ValueError('Invalid model')
+
+            self.model = TerminalId._MODEL_MAP[model]
+            self.keyboard = (value & 0xf0) >> 4
+        elif value == 1:
+            self.type = TerminalType.DFT
+            self.model = None
+            self.keyboard = None
+        else:
+            raise ValueError('Invalid terminal identifier')
 
     def __repr__(self):
-        return f'<TerminalId model={self.model}, keyboard={self.keyboard}>'
+        return (f'<TerminalId type={self.type.name}, model={self.model}, '
+                f'keyboard={self.keyboard}>')
 
 class Control:
     """Terminal control register."""
