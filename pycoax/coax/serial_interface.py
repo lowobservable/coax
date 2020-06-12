@@ -162,7 +162,18 @@ def _convert_error(message):
         return InterfaceError(f'Invalid error response: {message}')
 
     if message[1] in ERROR_MAP:
-        return ERROR_MAP[message[1]]
+        error = ERROR_MAP[message[1]]
+
+        # Append description if included.
+        if len(message) > 2:
+            description = message[2:].decode('ascii')
+
+            if error.args:
+                error.args = (f'{error.args[0]}: {description}', *error.args[1:])
+            else:
+                error.args = (description,)
+
+        return error
 
     return InterfaceError(f'Unknown error: {message[1]}')
 

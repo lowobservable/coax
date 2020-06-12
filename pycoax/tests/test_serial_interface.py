@@ -53,6 +53,14 @@ class SerialInterfaceResetTestCase(unittest.TestCase):
         with self.assertRaisesRegex(InterfaceError, 'Invalid request message'):
             self.interface.reset()
 
+    def test_error_with_description_is_handled_correctly(self):
+        # Arrange
+        self.interface._read_message = Mock(return_value=bytes.fromhex('02 01 45 72 72 6f 72 20 64 65 73 63 72 69 70 74 69 6f 6e'))
+
+        # Act and assert
+        with self.assertRaisesRegex(InterfaceError, 'Invalid request message: Error description'):
+            self.interface.reset()
+
 # TODO...
 
 class SerialInterfaceReadMessageTestCase(unittest.TestCase):
