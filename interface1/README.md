@@ -2,11 +2,9 @@
 
 A serial attached Arduino interface using the National Semiconductor DP8340 and DP8341.
 
-## Schematic
+## Hardware
 
-![Schematic](hardware/schematic.svg)
-
-## Bill of Materials
+You can find the Gerber files for fabricating a PCB in the [fabrication](hardware/fabrication) directory. I have used JLCPCB to make the PCBs.
 
 This interface requires an [Arduino Mega 2560 R3](https://store.arduino.cc/usa/mega-2560-r3).
 
@@ -31,3 +29,17 @@ This interface requires an [Arduino Mega 2560 R3](https://store.arduino.cc/usa/m
 ## Firmware
 
 The firmware currently provides the ability to send commands and receive responses - it is designed to implement a terminal controller, not a terminal.
+
+You will need [PlatformIO](https://platformio.org/) to build and upload the firmware, only Platform IO Core (the CLI) is required.
+
+To build and upload the firmware for an Arduino Mega 2560 R3:
+
+```
+platformio run -t upload -e mega2560
+```
+
+For an original Arduino Mega:
+
+```
+platformio run -t upload -e mega1280
+```

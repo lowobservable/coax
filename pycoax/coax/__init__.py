@@ -7,6 +7,7 @@ from .protocol import (
     PollResponse,
     PowerOnResetCompletePollResponse,
     KeystrokePollResponse,
+    TerminalType,
     Control,
     SecondaryControl,
     poll,

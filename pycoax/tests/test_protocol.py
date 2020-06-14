@@ -4,7 +4,7 @@ from unittest.mock import Mock
 import context
 
 from coax import PollResponse, KeystrokePollResponse, ProtocolError
-from coax.protocol import Command, Status, TerminalId, Control, SecondaryControl, pack_command_word, unpack_command_word, pack_data_word, unpack_data_word, pack_data_words, unpack_data_words, _execute_read_command, _execute_write_command
+from coax.protocol import Command, Status, TerminalType, TerminalId, Control, SecondaryControl, pack_command_word, unpack_command_word, pack_data_word, unpack_data_word, pack_data_words, unpack_data_words, _execute_read_command, _execute_write_command
 
 class PollResponseTestCase(unittest.TestCase):
     def test_is_power_on_reset_complete(self):
@@ -35,31 +35,40 @@ class StatusTestCase(unittest.TestCase):
         self.assertTrue(status.operation_complete)
 
 class TerminalIdTestCase(unittest.TestCase):
-    def test_model_2(self):
+    def test_cut_model_2(self):
         terminal_id = TerminalId(0b00000100)
 
+        self.assertEqual(terminal_id.type, TerminalType.CUT)
         self.assertEqual(terminal_id.model, 2)
 
-    def test_model_3(self):
+    def test_cut_model_3(self):
         terminal_id = TerminalId(0b00000110)
 
+        self.assertEqual(terminal_id.type, TerminalType.CUT)
         self.assertEqual(terminal_id.model, 3)
 
-    def test_model_4(self):
+    def test_cut_model_4(self):
         terminal_id = TerminalId(0b00001110)
 
+        self.assertEqual(terminal_id.type, TerminalType.CUT)
         self.assertEqual(terminal_id.model, 4)
 
-    def test_model_5(self):
+    def test_cut_model_5(self):
         terminal_id = TerminalId(0b00001100)
 
+        self.assertEqual(terminal_id.type, TerminalType.CUT)
         self.assertEqual(terminal_id.model, 5)
+
+    def test_dft(self):
+        terminal_id = TerminalId(0b00000001)
+
+        self.assertEqual(terminal_id.type, TerminalType.DFT)
 
     def test_invalid_identifier(self):
         with self.assertRaisesRegex(ValueError, 'Invalid terminal identifier'):
-            terminal_id = TerminalId(0b00000001)
+            terminal_id = TerminalId(0b00000011)
 
-    def test_invalid_model(self):
+    def test_invalid_cut_model(self):
         with self.assertRaisesRegex(ValueError, 'Invalid model'):
             terminal_id = TerminalId(0b00000000)
 

@@ -64,11 +64,18 @@ void sendMessage(uint8_t *buffer, int bufferCount)
     Serial.flush();
 }
 
-void sendErrorMessage(uint8_t code)
+void sendErrorMessage(uint8_t code, const char *description)
 {
-    uint8_t message[] = { 0x02, code };
+    uint8_t message[2 + 62 + 1] = { 0x02, code };
+    int count = 2;
 
-    sendMessage(message, 2);
+    if (description != NULL) {
+        strncpy((char *) (message + 2), description, 62);
+
+        count += strlen(description);
+    }
+
+    sendMessage(message, count);
 }
 
 #define COMMAND_RESET 0x01
@@ -86,7 +93,7 @@ void handleResetCommand(uint8_t *buffer, int bufferCount)
 void handleTransmitReceiveCommand(uint8_t *buffer, int bufferCount)
 {
     if (bufferCount < 6) {
-        sendErrorMessage(ERROR_INVALID_MESSAGE);
+        sendErrorMessage(ERROR_INVALID_MESSAGE, "HANDLE_TXRX_BUFFER_COUNT_6");
         return;
     }
 
@@ -100,7 +107,7 @@ void handleTransmitReceiveCommand(uint8_t *buffer, int bufferCount)
     uint16_t receiveTimeout = (buffer[bufferCount - 2] << 8) | buffer[bufferCount - 1];
 
     if (transmitBufferCount < 1) {
-        sendErrorMessage(ERROR_INVALID_MESSAGE);
+        sendErrorMessage(ERROR_INVALID_MESSAGE, "HANDLE_TXRX_TX_BUFFER_COUNT_1");
         return;
     }
 
@@ -127,7 +134,7 @@ void handleTransmitReceiveCommand(uint8_t *buffer, int bufferCount)
     bufferCount = CoaxTransceiver::transmitReceive(transmitBuffer, transmitBufferCount, receiveBuffer, receiveBufferSize, receiveTimeout);
 
     if (bufferCount < 0) {
-        sendErrorMessage(100 + ((-1) * bufferCount));
+        sendErrorMessage(100 + ((-1) * bufferCount), NULL);
         return;
     }
 
@@ -142,7 +149,7 @@ void handleTransmitReceiveCommand(uint8_t *buffer, int bufferCount)
 void handleMessage(uint8_t *buffer, int bufferCount)
 {
     if (bufferCount < 1) {
-        sendErrorMessage(ERROR_INVALID_MESSAGE);
+        sendErrorMessage(ERROR_INVALID_MESSAGE, "HANDLE_MESSAGE_BUFFER_COUNT_1");
         return;
     }
 
@@ -153,21 +160,21 @@ void handleMessage(uint8_t *buffer, int bufferCount)
     } else if (command == COMMAND_TRANSMIT_RECEIVE) {
         handleTransmitReceiveCommand(buffer + 1, bufferCount - 1);
     } else {
-        sendErrorMessage(ERROR_UNKNOWN_COMMAND);
+        sendErrorMessage(ERROR_UNKNOWN_COMMAND, NULL);
     }
 }
 
 void handleFrame(uint8_t *buffer, int bufferCount)
 {
     if (bufferCount < 4) {
-        sendErrorMessage(ERROR_INVALID_MESSAGE);
+        sendErrorMessage(ERROR_INVALID_MESSAGE, "HANDLE_FRAME_BUFFER_COUNT_4");
         return;
     }
 
     int count = (buffer[0] << 8) | buffer[1];
 
     if (bufferCount - 4 != count) {
-        sendErrorMessage(ERROR_INVALID_MESSAGE);
+        sendErrorMessage(ERROR_INVALID_MESSAGE, "HANDLE_FRAME_BUFFER_COUNT_MISMATCH");
         return;
     }
 

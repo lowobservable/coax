@@ -36,7 +36,7 @@ class SerialInterface(Interface):
             raise _convert_error(message)
 
         if len(message) != 4:
-            raise InterfaceError('Invalid reset response')
+            raise InterfaceError(f'Invalid reset response: {message}')
 
         (major, minor, patch) = struct.unpack('BBB', message[1:])
 
@@ -109,7 +109,7 @@ class SerialInterface(Interface):
             raise InterfaceError('SLIP protocol error')
 
         if len(message) < 4:
-            raise InterfaceError('Invalid response message')
+            raise InterfaceError(f'Invalid response message: {message}')
 
         (length,) = struct.unpack('>H', message[:2])
 
@@ -156,15 +156,26 @@ ERROR_MAP = {
 
 def _convert_error(message):
     if message[0] != 0x02:
-        return InterfaceError('Invalid response')
+        return InterfaceError(f'Invalid response: {message}')
 
     if len(message) < 2:
-        return InterfaceError('Invalid error response')
+        return InterfaceError(f'Invalid error response: {message}')
 
     if message[1] in ERROR_MAP:
-        return ERROR_MAP[message[1]]
+        error = ERROR_MAP[message[1]]
 
-    return InterfaceError('Unknown error')
+        # Append description if included.
+        if len(message) > 2:
+            description = message[2:].decode('ascii')
+
+            if error.args:
+                error.args = (f'{error.args[0]}: {description}', *error.args[1:])
+            else:
+                error.args = (description,)
+
+        return error
+
+    return InterfaceError(f'Unknown error: {message[1]}')
 
 class SlipSerial(SlipWrapper):
     """sliplib wrapper for pySerial."""

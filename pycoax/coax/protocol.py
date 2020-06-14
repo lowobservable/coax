@@ -66,7 +66,7 @@ class PowerOnResetCompletePollResponse(PollResponse):
 
     def __init__(self, value):
         if not PollResponse.is_power_on_reset_complete(value):
-            raise ValueError('Invalid POR poll response')
+            raise ValueError(f'Invalid POR poll response: {value}')
 
         super().__init__(value)
 
@@ -75,7 +75,7 @@ class KeystrokePollResponse(PollResponse):
 
     def __init__(self, value):
         if not PollResponse.is_keystroke(value):
-            raise ValueError('Invalid keystroke poll response')
+            raise ValueError(f'Invalid keystroke poll response: {value}')
 
         super().__init__(value)
 
@@ -97,6 +97,12 @@ class Status:
                 f'feature_error={self.feature_error}, '
                 f'operation_complete={self.operation_complete}>')
 
+class TerminalType(Enum):
+    """Terminal type."""
+
+    CUT = 1
+    DFT = 2
+
 class TerminalId:
     """Terminal model and keyboard."""
 
@@ -108,21 +114,28 @@ class TerminalId:
     }
 
     def __init__(self, value):
-        if (value & 0x1) != 0:
-            raise ValueError('Invalid terminal identifier')
-
         self.value = value
 
-        model = (value & 0x0e) >> 1
+        if (value & 0x1) == 0:
+            self.type = TerminalType.CUT
 
-        if model not in TerminalId._MODEL_MAP:
-            raise ValueError('Invalid model')
+            model = (value & 0x0e) >> 1
 
-        self.model = TerminalId._MODEL_MAP[model]
-        self.keyboard = (value & 0xf0) >> 4
+            if model not in TerminalId._MODEL_MAP:
+                raise ValueError(f'Invalid model: {model}')
+
+            self.model = TerminalId._MODEL_MAP[model]
+            self.keyboard = (value & 0xf0) >> 4
+        elif value == 1:
+            self.type = TerminalType.DFT
+            self.model = None
+            self.keyboard = None
+        else:
+            raise ValueError(f'Invalid terminal identifier: {value}')
 
     def __repr__(self):
-        return f'<TerminalId model={self.model}, keyboard={self.keyboard}>'
+        return (f'<TerminalId type={self.type.name}, model={self.model}, '
+                f'keyboard={self.keyboard}>')
 
 class Control:
     """Terminal control register."""
@@ -324,7 +337,7 @@ def is_command_word(word):
 def unpack_command_word(word):
     """Unpack a 10-bit command word."""
     if not is_command_word(word):
-        raise ProtocolError('Word does not have command bit set')
+        raise ProtocolError(f'Word does not have command bit set: {word}')
 
     command = (word >> 2) & 0x1f
 
@@ -343,13 +356,13 @@ def is_data_word(word):
 def unpack_data_word(word, check_parity=False):
     """Unpack the data byte from a 10-bit data word."""
     if not is_data_word(word):
-        raise ProtocolError('Word does not have data bit set')
+        raise ProtocolError(f'Word does not have data bit set: {word}')
 
     byte = (word >> 2) & 0xff
     parity = (word >> 1) & 0x1
 
     if check_parity and parity != odd_parity(byte):
-        raise ProtocolError('Parity error')
+        raise ProtocolError(f'Parity error: {word}')
 
     return byte
 
@@ -374,7 +387,8 @@ def _execute_read_command(interface, command_word, response_length=1,
     if validate_response_length and len(response) != response_length:
         command = unpack_command_word(command_word)
 
-        raise ProtocolError(f'Expected {response_length} word {command.name} response')
+        raise ProtocolError((f'Expected {response_length} word {command.name} '
+                             f'response: {response}'))
 
     return unpack_data_words(response) if unpack else response
 
@@ -396,7 +410,7 @@ def _execute_write_command(interface, command_word, data=None, **kwargs):
     if len(response) != 1:
         command = unpack_command_word(command_word)
 
-        raise ProtocolError(f'Expected 1 word {command.name} response')
+        raise ProtocolError(f'Expected 1 word {command.name} response: {response}')
 
     if response[0] != 0:
-        raise ProtocolError('Expected TR/TA response')
+        raise ProtocolError(f'Expected TR/TA response: {response}')
