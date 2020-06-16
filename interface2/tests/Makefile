@@ -3,7 +3,9 @@ VVP ?= vvp
 
 RTL = ../rtl
 
-all: 
+all: coax_rx_bit_timer_tb.vcd
+
+coax_rx_bit_timer_tb: coax_rx_bit_timer_tb.v $(RTL)/coax_rx_bit_timer.v
 
 clean:
 	rm -f *_tb *.vcd
@@ -12,6 +14,6 @@ clean:
 	$(IVERILOG) -o $@ $^
 
 %_tb.vcd: %_tb
-	$(VVP) -N $< -lxt2
+	$(VVP) -N $<
 
 .PHONY: all, clean
