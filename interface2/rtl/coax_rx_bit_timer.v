@@ -47,7 +47,7 @@ module coax_rx_bit_timer(
 
             SYNCHRONIZED:
             begin
-                if (transition_counter < CLOCKS_PER_BIT * 1.25)
+                if (transition_counter < (CLOCKS_PER_BIT + (CLOCKS_PER_BIT / 4)))
                     next_transition_counter = transition_counter + 1;
                 else
                     next_state = UNSYNCHRONIZED;
@@ -59,13 +59,13 @@ module coax_rx_bit_timer(
                 else
                     next_bit_counter = 0;
 
-                if (rx != previous_rx && transition_counter > CLOCKS_PER_BIT / 2)
+                if (rx != previous_rx && transition_counter > (CLOCKS_PER_BIT / 2))
                 begin
                     next_transition_counter = 0;
                     next_bit_counter = CLOCKS_PER_BIT / 2;
                 end
 
-                if (bit_counter == CLOCKS_PER_BIT * 0.75)
+                if (bit_counter == ((CLOCKS_PER_BIT / 4) * 3))
                     sample = 1;
             end
 
@@ -76,7 +76,7 @@ module coax_rx_bit_timer(
                 else
                     next_bit_counter = 0;
 
-                if (bit_counter == CLOCKS_PER_BIT * 0.75)
+                if (bit_counter == ((CLOCKS_PER_BIT / 4) * 3))
                     sample = 1;
             end
         endcase

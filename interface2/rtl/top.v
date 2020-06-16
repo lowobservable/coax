@@ -3,6 +3,13 @@
 module top (
     input clk_16mhz,
 
+    // Receiver
+    input rx,
+
+    input reset,
+    output sample,
+    output synchronized,
+
     output usb_pu
 );
     // 19 MHz
@@ -21,6 +28,25 @@ module top (
         .BYPASS(1'b0),
         .REFERENCECLK(clk_16mhz),
         .PLLOUTCORE(clk_19mhz)
+    );
+
+    reg rx_0 = 0;
+    reg rx_1 = 1;
+
+    always @(posedge clk_19mhz)
+    begin
+        rx_0 <= rx;
+        rx_1 <= rx_0;
+    end
+
+    coax_rx_bit_timer #(
+        .CLOCKS_PER_BIT(8)
+    ) rx_bit_timer (
+        .clk(clk_19mhz),
+        .rx(rx_1),
+        .reset(reset),
+        .sample(sample),
+        .synchronized(synchronized)
     );
 
     assign usb_pu = 0;
