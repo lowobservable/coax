@@ -9,6 +9,7 @@ module top (
     input reset,
     output sample,
     output synchronized,
+    output debug,
 
     output usb_pu
 );
@@ -48,6 +49,8 @@ module top (
         .sample(sample),
         .synchronized(synchronized)
     );
+
+    assign debug = rx_1;
 
     assign usb_pu = 0;
 endmodule

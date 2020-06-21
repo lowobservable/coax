@@ -1,6 +1,6 @@
 `default_nettype none
 
-module coax_rx_bit_timer_tb();
+module coax_rx_bit_timer_tb ();
     reg clk = 0;
 
     initial begin
@@ -61,11 +61,7 @@ module coax_rx_bit_timer_tb();
         input bit
     );
     begin
-        rx = !bit;
-        #8;
-        rx = bit;
-        #8;
-        rx = 0;
+        rx_bit_custom(bit, 8, 8);
     end
     endtask
 

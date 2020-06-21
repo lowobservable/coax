@@ -2,32 +2,36 @@
 set_io --warn-no-port clk_16mhz B2
 
 # Transmitter
-set_io --warn-no-port tx_active A2 # 1
-set_io --warn-no-port tx_inverted A1 # 2
-set_io --warn-no-port tx_delay B1 # 3
+#set_io --warn-no-port tx_active A2 # 1
+#set_io --warn-no-port tx_inverted A1 # 2
+#set_io --warn-no-port tx_delay B1 # 3
 
-set_io --warn-no-port tx_load D2 # 6
-set_io --warn-no-port tx_full D1 # 7
+#set_io --warn-no-port tx_load D2 # 6
+#set_io --warn-no-port tx_full D1 # 7
 
 # Receiver
 set_io --warn-no-port rx C2 # 4
 
-set_io --warn-no-port rx_enable E1 # 9
-set_io --warn-no-port rx_active G2 # 10
-set_io --warn-no-port rx_data_available H1 # 11
-set_io --warn-no-port rx_data_read J1 # 12
+set_io --warn-no-port reset E1 # 9
+set_io --warn-no-port sample G2 # 10
+set_io --warn-no-port synchronized H1 # 11
+
+#set_io --warn-no-port rx_enable E1 # 9
+#set_io --warn-no-port rx_active G2 # 10
+#set_io --warn-no-port rx_data_available H1 # 11
+#set_io --warn-no-port rx_data_read J1 # 12
 
 # Shared data bus
-set_io --warn-no-port data[9] B6 # 23
-set_io --warn-no-port data[8] A7
-set_io --warn-no-port data[7] B7
-set_io --warn-no-port data[6] A8
-set_io --warn-no-port data[5] B8
-set_io --warn-no-port data[4] A9
-set_io --warn-no-port data[3] C9
-set_io --warn-no-port data[2] D8
-set_io --warn-no-port data[1] D9
-set_io --warn-no-port data[0] H9 # 14
+#set_io --warn-no-port data[9] B6 # 23
+#set_io --warn-no-port data[8] A7
+#set_io --warn-no-port data[7] B7
+#set_io --warn-no-port data[6] A8
+#set_io --warn-no-port data[5] B8
+#set_io --warn-no-port data[4] A9
+#set_io --warn-no-port data[3] C9
+#set_io --warn-no-port data[2] D8
+#set_io --warn-no-port data[1] D9
+#set_io --warn-no-port data[0] H9 # 14
 
 set_io --warn-no-port debug H2 # 13
 
