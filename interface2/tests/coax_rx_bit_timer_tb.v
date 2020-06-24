@@ -1,6 +1,6 @@
 `default_nettype none
 
-module coax_rx_bit_timer_tb ();
+module coax_rx_bit_timer_tb;
     reg clk = 0;
 
     initial begin
@@ -46,9 +46,7 @@ module coax_rx_bit_timer_tb ();
         rx_bit_custom(1, 24, 8);
 
         // Reset
-        reset = 1;
-        #2;
-        reset = 0;
+        dut_reset;
 
         rx_bit(1);
 
@@ -56,6 +54,14 @@ module coax_rx_bit_timer_tb ();
 
         $finish;
     end
+
+    task dut_reset;
+    begin
+        reset = 1;
+        #2;
+        reset = 0;
+    end
+    endtask
 
     task rx_bit (
         input bit
