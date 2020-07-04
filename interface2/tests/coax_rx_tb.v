@@ -24,8 +24,16 @@ module coax_rx_tb;
         $dumpfile("coax_rx_tb.vcd");
         $dumpvars(0, coax_rx_tb);
 
-        test_1;
-        test_2;
+        //test_1;
+        //test_2;
+        //test_3;
+        //test_4;
+        //test_5;
+        //test_6;
+        //test_7;
+        //test_8;
+        //test_9;
+        test_10;
 
         $finish;
     end
@@ -51,6 +59,123 @@ module coax_rx_tb;
         #64;
 
         $display("END: test_2");
+    end
+    endtask
+
+    task test_3;
+    begin
+        $display("START: test_3");
+
+        rx_bit(1);
+
+        #64;
+
+        $display("END: test_3");
+    end
+    endtask
+
+    task test_4;
+    begin
+        $display("START: test_4");
+
+        rx_bit(1);
+        rx_bit(1);
+
+        #64;
+
+        $display("END: test_4");
+    end
+    endtask
+
+    task test_5;
+    begin
+        $display("START: test_5");
+
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(1);
+
+        #64;
+
+        $display("END: test_5");
+    end
+    endtask
+
+    task test_6;
+    begin
+        $display("START: test_6");
+
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(1);
+
+        #64;
+
+        $display("END: test_6");
+    end
+    endtask
+
+    task test_7;
+    begin
+        $display("START: test_7");
+
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(1);
+
+        #64;
+
+        $display("END: test_7");
+    end
+    endtask
+
+    task test_8;
+    begin
+        $display("START: test_8");
+
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(1);
+
+        rx = 0;
+        #24;
+        rx = 1;
+
+        #64;
+
+        $display("END: test_8");
+    end
+    endtask
+
+    task test_9;
+    begin
+        $display("START: test_9");
+
+        rx_start_sequence;
+
+        rx = 0;
+
+        #64;
+
+        $display("END: test_9");
+    end
+    endtask
+
+    task test_10;
+    begin
+        $display("START: test_10");
+
+        rx_start_sequence;
+        rx_bit(1); // SYNC_BIT
+
+        #64;
+
+        $display("END: test_10");
     end
     endtask
 
