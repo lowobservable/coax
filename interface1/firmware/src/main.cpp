@@ -212,6 +212,7 @@ void loop()
                 }
 
                 frameBufferCount = 0;
+                frameState = WAIT_START;
             } else if (byte == FRAME_ESCAPE) {
                 frameState = ESCAPE;
             } else {

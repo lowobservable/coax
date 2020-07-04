@@ -21,16 +21,18 @@ class SerialInterface(Interface):
     def reset(self):
         original_serial_timeout = self.serial.timeout
 
+        self.serial.timeout = 5
+
         self.serial.reset_input_buffer()
 
         self._write_message(bytes([0x01]))
-
-        self.serial.timeout = 5
 
         try:
             message = self._read_message()
         finally:
             self.serial.timeout = original_serial_timeout
+
+            self.serial.reset_input_buffer()
 
         if message[0] != 0x01:
             raise _convert_error(message)
