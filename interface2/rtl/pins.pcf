@@ -13,12 +13,11 @@ set_io --warn-no-port clk_16mhz B2
 set_io --warn-no-port rx C2 # 4
 
 set_io --warn-no-port reset E1 # 9
-set_io --warn-no-port sample G2 # 10
-set_io --warn-no-port synchronized H1 # 11
 
 #set_io --warn-no-port rx_enable E1 # 9
-#set_io --warn-no-port rx_active G2 # 10
-#set_io --warn-no-port rx_data_available H1 # 11
+set_io --warn-no-port rx_active G2 # 10
+set_io --warn-no-port rx_error H1 # 11
+#set_io --warn-no-port rx_data_available xx # xx
 #set_io --warn-no-port rx_data_read J1 # 12
 
 # Shared data bus

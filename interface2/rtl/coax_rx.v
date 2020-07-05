@@ -311,7 +311,7 @@ module coax_rx (
 
         if (reset)
         begin
-            bit_timer_reset = 1;
+            bit_timer_reset <= 1;
 
             state_counter <= 0;
             state <= IDLE;
