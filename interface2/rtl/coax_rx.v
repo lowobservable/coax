@@ -43,8 +43,8 @@ module coax_rx (
 
     reg [9:0] next_data;
 
-    reg [9:0] xxx_data;
-    reg [9:0] next_xxx_data;
+    reg [9:0] internal_data;
+    reg [9:0] next_internal_data;
     reg [3:0] bit_counter = 0;
     reg [3:0] next_bit_counter;
 
@@ -70,7 +70,7 @@ module coax_rx (
         next_data = data;
 
         next_bit_counter = bit_counter;
-        next_xxx_data = xxx_data;
+        next_internal_data = internal_data;
 
         case (state)
             IDLE:
@@ -226,7 +226,7 @@ module coax_rx (
                begin
                    if (synchronized)
                    begin
-                       next_xxx_data = { xxx_data[8:0], rx };
+                       next_internal_data = { internal_data[8:0], rx };
 
                        if (bit_counter < 9)
                        begin
@@ -252,7 +252,7 @@ module coax_rx (
                    if (synchronized)
                    begin
                        // Even parity includes the sync bit.
-                       if (rx == ^{ 1'b1, xxx_data })
+                       if (rx == ^{ 1'b1, internal_data })
                        begin
                            next_state = SYNC_BIT;
                        end
@@ -302,7 +302,7 @@ module coax_rx (
         data <= next_data;
 
         bit_counter <= next_bit_counter;
-        xxx_data <= next_xxx_data;
+        internal_data <= next_internal_data;
 
         if (reset)
         begin
@@ -314,7 +314,7 @@ module coax_rx (
             data <= 10'b0000000000;
 
             bit_counter <= 0;
-            xxx_data <= 10'b0000000000;
+            internal_data <= 10'b0000000000;
         end
 
         previous_rx <= rx;
