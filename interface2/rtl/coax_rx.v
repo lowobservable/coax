@@ -4,7 +4,9 @@ module coax_rx (
     input clk,
     input rx,
     input reset,
-    output active
+    output active,
+    output error,
+    output reg [9:0] data
 );
     parameter CLOCKS_PER_BIT = 8;
 
@@ -20,6 +22,7 @@ module coax_rx (
     localparam START_SEQUENCE_9 = 9;
     localparam SYNC_BIT = 10;
     localparam DATA = 11;
+    localparam ERROR = 50;
 
     // TODO: size...
     reg [8:0] state = IDLE;
@@ -32,6 +35,8 @@ module coax_rx (
 
     reg bit_timer_reset = 0;
     reg next_bit_timer_reset;
+
+    reg [9:0] next_data;
 
     wire sample;
     wire synchronized;
@@ -52,6 +57,8 @@ module coax_rx (
         next_state_counter = state_counter + 1;
 
         next_bit_timer_reset = 0;
+
+        next_data = 10'b0000000000;
 
         case (state)
             IDLE:
@@ -130,20 +137,6 @@ module coax_rx (
                     next_state = START_SEQUENCE_7;
                 else if (state_counter >= CLOCKS_PER_BIT)
                     next_state = IDLE;
-                /*
-                if (sample)
-                begin
-                    if (!rx)
-                    begin
-                        next_bit_timer_reset = 1;
-                        next_state = START_SEQUENCE_7;
-                    end
-                    else
-                    begin
-                        next_state = IDLE; // NOT TESTED!
-                    end
-                end
-                */
             end
 
             START_SEQUENCE_7:
@@ -152,12 +145,6 @@ module coax_rx (
                     next_state = START_SEQUENCE_8;
                 else if (state_counter >= (CLOCKS_PER_BIT * 2))
                     next_state = IDLE;
-                /*
-                if (synchronized && sample && rx)
-                    next_state = START_SEQUENCE_8;
-                else if (state_counter >= (CLOCKS_PER_BIT * 2))
-                    next_state = IDLE;
-                */
             end
 
             START_SEQUENCE_8:
@@ -171,44 +158,25 @@ module coax_rx (
                 begin
                     next_state = IDLE;
                 end
-                /*
-                if (sample)
-                begin
-                    if (rx)
-                        next_state = START_SEQUENCE_9;
-                    else
-                        next_state = IDLE; // NOT TESTED!
-                end
-                */
             end
 
             START_SEQUENCE_9:
             begin
-                // This is really the first SYNC_BIT...
+                // This is really the first SYNC_BIT but we treat it
+                // differently and consider it part of the start
+                // sequence.
 
                 if (sample && synchronized)
                 begin
                     if (rx)
                         next_state = DATA;
                     else
-                        next_state = /* TODO: ERROR START SEQUENCE? */ IDLE;
+                        next_state = IDLE;
                 end
                 else if (state_counter >= CLOCKS_PER_BIT)
                 begin
-                    next_state = /* TODO: ERROR LOSS OF MID-BIT TRANSITION */ IDLE;
-                end
-
-                /*
-                if (!rx)
-                begin
-                    next_bit_timer_reset = 1;
-                    next_state = SYNC_BIT;
-                end
-                else if (state_counter >= (CLOCKS_PER_BIT * 2))
-                begin
                     next_state = IDLE;
                 end
-                */
            end
 
            SYNC_BIT:
@@ -218,7 +186,18 @@ module coax_rx (
 
            DATA:
            begin
-               // TODO
+               if (sample)
+               begin
+                   if (synchronized)
+                   begin
+                       // TODO
+                   end
+                   else
+                   begin
+                       next_data = 10'b0000000001; // TODO: LOSS OF MID-BIT TRANSITION
+                       next_state = ERROR;
+                   end
+               end
            end
         endcase
     end
@@ -234,12 +213,16 @@ module coax_rx (
 
         bit_timer_reset <= next_bit_timer_reset;
 
+        data <= next_data;
+
         if (reset)
         begin
             bit_timer_reset = 1;
 
             state_counter <= 0;
             state <= IDLE;
+
+            data <= 10'b0000000000;
         end
 
         previous_rx <= rx;
@@ -247,4 +230,5 @@ module coax_rx (
     end
 
     assign active = (state >= SYNC_BIT && state <= DATA);
+    assign error = (state == ERROR);
 endmodule

@@ -1,5 +1,7 @@
 `default_nettype none
 
+`include "assert.v"
+
 module coax_rx_tb;
     reg clk = 0;
 
@@ -24,15 +26,15 @@ module coax_rx_tb;
         $dumpfile("coax_rx_tb.vcd");
         $dumpvars(0, coax_rx_tb);
 
-        //test_1;
-        //test_2;
-        //test_3;
-        //test_4;
-        //test_5;
-        //test_6;
-        //test_7;
-        //test_8;
-        //test_9;
+        test_1;
+        test_2;
+        test_3;
+        test_4;
+        test_5;
+        test_6;
+        test_7;
+        test_8;
+        test_9;
         test_10;
 
         $finish;
@@ -42,9 +44,13 @@ module coax_rx_tb;
     begin
         $display("START: test_1");
 
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+
         dut_reset;
 
         #8;
+
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
 
         $display("END: test_1");
     end
@@ -54,9 +60,13 @@ module coax_rx_tb;
     begin
         $display("START: test_2");
 
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+
         rx = 1;
 
         #64;
+
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
 
         $display("END: test_2");
     end
@@ -66,9 +76,13 @@ module coax_rx_tb;
     begin
         $display("START: test_3");
 
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+
         rx_bit(1);
 
         #64;
+
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
 
         $display("END: test_3");
     end
@@ -78,10 +92,14 @@ module coax_rx_tb;
     begin
         $display("START: test_4");
 
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+
         rx_bit(1);
         rx_bit(1);
 
         #64;
+
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
 
         $display("END: test_4");
     end
@@ -91,11 +109,15 @@ module coax_rx_tb;
     begin
         $display("START: test_5");
 
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+
         rx_bit(1);
         rx_bit(1);
         rx_bit(1);
 
         #64;
+
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
 
         $display("END: test_5");
     end
@@ -105,12 +127,16 @@ module coax_rx_tb;
     begin
         $display("START: test_6");
 
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+
         rx_bit(1);
         rx_bit(1);
         rx_bit(1);
         rx_bit(1);
 
         #64;
+
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
 
         $display("END: test_6");
     end
@@ -120,6 +146,8 @@ module coax_rx_tb;
     begin
         $display("START: test_7");
 
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+
         rx_bit(1);
         rx_bit(1);
         rx_bit(1);
@@ -128,6 +156,8 @@ module coax_rx_tb;
 
         #64;
 
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+
         $display("END: test_7");
     end
     endtask
@@ -135,6 +165,8 @@ module coax_rx_tb;
     task test_8;
     begin
         $display("START: test_8");
+
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
 
         rx_bit(1);
         rx_bit(1);
@@ -148,6 +180,8 @@ module coax_rx_tb;
 
         #64;
 
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+
         $display("END: test_8");
     end
     endtask
@@ -156,11 +190,15 @@ module coax_rx_tb;
     begin
         $display("START: test_9");
 
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+
         rx_start_sequence;
 
         rx = 0;
 
         #64;
+
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
 
         $display("END: test_9");
     end
@@ -170,10 +208,22 @@ module coax_rx_tb;
     begin
         $display("START: test_10");
 
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+
         rx_start_sequence;
         rx_bit(1); // SYNC_BIT
 
         #64;
+
+        `assert_equal(dut.state, dut.ERROR, "State should be ERROR");
+
+        `assert_high(dut.error, "error should be HIGH");
+
+        dut_reset;
+
+        #16;
+
+        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
 
         $display("END: test_10");
     end
