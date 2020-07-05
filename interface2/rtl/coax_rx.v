@@ -35,7 +35,6 @@ module coax_rx (
     reg [3:0] next_state;
     reg [3:0] previous_state;
     reg [7:0] state_counter;
-    reg [7:0] next_state_counter;
 
     reg previous_rx;
 
@@ -65,7 +64,6 @@ module coax_rx (
     always @(*)
     begin
         next_state = state;
-        next_state_counter = state_counter + 1;
 
         next_bit_timer_reset = 0;
 
@@ -295,12 +293,9 @@ module coax_rx (
 
     always @(posedge clk)
     begin
-        if (state != next_state)
-            state_counter <= 0;
-        else
-            state_counter <= next_state_counter;
-
         state <= next_state;
+
+        state_counter <= (state == next_state) ? state_counter + 1 : 0;
 
         bit_timer_reset <= next_bit_timer_reset;
 
