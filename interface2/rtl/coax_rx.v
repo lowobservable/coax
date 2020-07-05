@@ -11,7 +11,8 @@ module coax_rx (
     parameter CLOCKS_PER_BIT = 8;
 
     localparam LOSS_OF_MID_BIT_TRANSITION_ERROR = 10'b0000000001;
-    localparam PARITY_ERROR                     = 10'b0000000010;
+    localparam PARITY_ERROR = 10'b0000000010;
+    localparam INVALID_END_SEQUENCE_ERROR = 10'b0000000100;
 
     localparam IDLE = 0;
     localparam START_SEQUENCE_1 = 1;
@@ -26,14 +27,15 @@ module coax_rx (
     localparam SYNC_BIT = 10;
     localparam DATA_BIT = 11;
     localparam PARITY_BIT = 12;
-    localparam ERROR = 50;
+    localparam END_SEQUENCE_1 = 13;
+    localparam END_SEQUENCE_2 = 14;
+    localparam ERROR = 15;
 
-    // TODO: size...
-    reg [8:0] state = IDLE;
-    reg [8:0] next_state;
-    reg [8:0] previous_state;
-    reg [8:0] state_counter;
-    reg [8:0] next_state_counter;
+    reg [3:0] state = IDLE;
+    reg [3:0] next_state;
+    reg [3:0] previous_state;
+    reg [3:0] state_counter;
+    reg [3:0] next_state_counter;
 
     reg previous_rx;
 
@@ -181,9 +183,14 @@ module coax_rx (
                 if (sample && synchronized)
                 begin
                     if (rx)
+                    begin
+                        next_bit_counter = 0;
                         next_state = DATA_BIT;
+                    end
                     else
+                    begin
                         next_state = IDLE;
+                    end
                 end
                 else if (state_counter >= CLOCKS_PER_BIT)
                 begin
@@ -197,7 +204,15 @@ module coax_rx (
                begin
                    if (synchronized)
                    begin
-                       // ...
+                       if (rx)
+                       begin
+                           next_bit_counter = 0;
+                           next_state = DATA_BIT;
+                       end
+                       else
+                       begin
+                           next_state = END_SEQUENCE_1;
+                       end
                    end
                    else
                    begin
@@ -255,6 +270,25 @@ module coax_rx (
                        next_state = ERROR;
                    end
                end
+           end
+
+           END_SEQUENCE_1:
+           begin
+               if (rx)
+               begin
+                   next_state = END_SEQUENCE_2;
+               end
+               else if (state_counter >= CLOCKS_PER_BIT)
+               begin
+                   next_data = INVALID_END_SEQUENCE_ERROR;
+                   next_state = ERROR;
+               end
+           end
+
+           END_SEQUENCE_2:
+           begin
+               // TODO: Let's do more!
+               next_state = IDLE;
            end
         endcase
     end
