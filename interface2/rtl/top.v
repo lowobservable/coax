@@ -7,6 +7,8 @@ module top (
     input rx,
     output rx_active,
     output rx_error,
+    output rx_data_available,
+    input rx_read,
 
     // Shared data bus
     inout [9:0] data,
@@ -35,12 +37,18 @@ module top (
     );
 
     reg rx_0 = 0;
-    reg rx_1 = 1;
+    reg rx_1 = 0;
+
+    reg rx_read_0 = 0;
+    reg rx_read_1 = 0;
 
     always @(posedge clk_38mhz)
     begin
         rx_0 <= rx;
         rx_1 <= rx_0;
+
+        rx_read_0 <= rx_read;
+        rx_read_1 <= rx_read_0;
     end
 
     wire [9:0] rx_data;
@@ -53,7 +61,9 @@ module top (
         .reset(reset),
         .active(rx_active),
         .error(rx_error),
-        .data(rx_data)
+        .data(rx_data),
+        .data_available(rx_data_available),
+        .read(rx_read_1)
     );
 
     assign data = rx_data;

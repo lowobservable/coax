@@ -6,13 +6,16 @@ module coax_rx (
     input reset,
     output active,
     output error,
-    output reg [9:0] data
+    output reg [9:0] data,
+    output reg data_available = 0,
+    input read
 );
     parameter CLOCKS_PER_BIT = 8;
 
     localparam LOSS_OF_MID_BIT_TRANSITION_ERROR = 10'b0000000001;
     localparam PARITY_ERROR = 10'b0000000010;
     localparam INVALID_END_SEQUENCE_ERROR = 10'b0000000100;
+    localparam OVERFLOW_ERROR = 10'b0000001000;
 
     localparam IDLE = 0;
     localparam START_SEQUENCE_1 = 1;
@@ -42,11 +45,14 @@ module coax_rx (
     reg next_bit_timer_reset;
 
     reg [9:0] next_data;
+    reg next_data_available;
 
     reg [9:0] internal_data;
     reg [9:0] next_internal_data;
     reg [3:0] bit_counter = 0;
     reg [3:0] next_bit_counter;
+
+    reg previous_read;
 
     wire sample;
     wire synchronized;
@@ -68,9 +74,10 @@ module coax_rx (
         next_bit_timer_reset = 0;
 
         next_data = data;
+        next_data_available = data_available;
 
-        next_bit_counter = bit_counter;
         next_internal_data = internal_data;
+        next_bit_counter = bit_counter;
 
         case (state)
             IDLE:
@@ -254,7 +261,17 @@ module coax_rx (
                        // Even parity includes the sync bit.
                        if (rx == ^{ 1'b1, internal_data })
                        begin
-                           next_state = SYNC_BIT;
+                           if (!data_available)
+                           begin
+                               next_data_available = 1;
+                               next_data = internal_data;
+                               next_state = SYNC_BIT;
+                           end
+                           else
+                           begin
+                               next_data = OVERFLOW_ERROR;
+                               next_state = ERROR;
+                           end
                        end
                        else
                        begin
@@ -294,31 +311,37 @@ module coax_rx (
     always @(posedge clk)
     begin
         state <= next_state;
-
         state_counter <= (state == next_state) ? state_counter + 1 : 0;
 
         bit_timer_reset <= next_bit_timer_reset;
 
         data <= next_data;
+        data_available <= next_data_available;
 
-        bit_counter <= next_bit_counter;
         internal_data <= next_internal_data;
+        bit_counter <= next_bit_counter;
 
         if (reset)
         begin
             bit_timer_reset <= 1;
 
-            state_counter <= 0;
             state <= IDLE;
+            state_counter <= 0;
 
             data <= 10'b0000000000;
+            data_available <= 0;
 
-            bit_counter <= 0;
             internal_data <= 10'b0000000000;
+            bit_counter <= 0;
+        end
+        else if (data_available && !read && previous_read)
+        begin
+            data_available <= 0;
         end
 
         previous_rx <= rx;
         previous_state <= state;
+        previous_read <= read;
     end
 
     assign active = (state >= SYNC_BIT && state <= PARITY_BIT);

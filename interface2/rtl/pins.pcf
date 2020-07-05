@@ -17,8 +17,8 @@ set_io --warn-no-port reset E1 # 9
 #set_io --warn-no-port rx_enable E1 # 9
 set_io --warn-no-port rx_active G2 # 10
 set_io --warn-no-port rx_error H1 # 11
-#set_io --warn-no-port rx_data_available xx # xx
-#set_io --warn-no-port rx_data_read J1 # 12
+set_io --warn-no-port rx_data_available J1 # 12
+set_io --warn-no-port rx_read H2 # 13
 
 # Shared data bus
 set_io --warn-no-port data[9] B6 # 23
@@ -32,6 +32,6 @@ set_io --warn-no-port data[2] D8
 set_io --warn-no-port data[1] D9
 set_io --warn-no-port data[0] H9 # 14
 
-set_io --warn-no-port debug H2 # 13
+set_io --warn-no-port debug A6 # 24
 
 set_io --warn-no-port usb_pu A3

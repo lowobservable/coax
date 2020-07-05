@@ -13,20 +13,21 @@ module coax_rx_tb;
 
     reg rx = 0;
     reg reset = 0;
+    reg read = 0;
 
     coax_rx #(
         .CLOCKS_PER_BIT(8)
     ) dut (
         .clk(clk),
         .rx(rx),
-        .reset(reset)
+        .reset(reset),
+        .read(read)
     );
 
     initial begin
         $dumpfile("coax_rx_tb.vcd");
         $dumpvars(0, coax_rx_tb);
 
-        /*
         test_1;
         test_2;
         test_3;
@@ -42,8 +43,8 @@ module coax_rx_tb;
         test_13;
         test_14;
         test_15;
-        */
         test_16;
+        test_17;
 
         $finish;
     end
@@ -437,7 +438,7 @@ module coax_rx_tb;
         rx_bit(1); // LSB DATA_BIT
         rx_bit(1); // PARITY_BIT
         rx_bit(0);
-        
+
         rx = 1;
         #16;
         rx = 0;
@@ -446,7 +447,65 @@ module coax_rx_tb;
 
         `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
+        `assert_high(dut.data_available, "data_available should be HIGH");
+        `assert_equal(dut.data, 10'b0110110011, "data not correct")
+        
+        read = 1;
+        #2;
+        read = 0;
+
+        #2;
+
+        `assert_low(dut.data_available, "data_available should be LOW");
+
         $display("END: test_16");
+    end
+    endtask
+
+    task test_17;
+    begin
+        $display("START: test_17");
+
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
+
+        rx_start_sequence;
+        rx_bit(1); // SYNC_BIT
+        rx_bit(0); // MSB DATA_BIT
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(0);
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(0);
+        rx_bit(0);
+        rx_bit(1);
+        rx_bit(1); // LSB DATA_BIT
+        rx_bit(1); // PARITY_BIT
+        rx_bit(1); // SYNC_BIT
+        rx_bit(1); // MSB DATA_BIT
+        rx_bit(0);
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(0);
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(0);
+        rx_bit(1);
+        rx_bit(1); // LSB DATA_BIT
+        rx_bit(0); // PARITY_BIT
+
+        `assert_equal(dut.state, dut.ERROR, "State should be ERROR");
+
+        `assert_high(dut.error, "error should be HIGH");
+        `assert_equal(dut.data, dut.OVERFLOW_ERROR, "data should be OVERFLOW_ERROR");
+
+        dut_reset;
+
+        #16;
+
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
+
+        $display("END: test_17");
     end
     endtask
 
