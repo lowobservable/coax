@@ -10,6 +10,9 @@ module coax_rx (
 );
     parameter CLOCKS_PER_BIT = 8;
 
+    localparam LOSS_OF_MID_BIT_TRANSITION_ERROR = 10'b0000000001;
+    localparam PARITY_ERROR                     = 10'b0000000010;
+
     localparam IDLE = 0;
     localparam START_SEQUENCE_1 = 1;
     localparam START_SEQUENCE_2 = 2;
@@ -21,7 +24,8 @@ module coax_rx (
     localparam START_SEQUENCE_8 = 8;
     localparam START_SEQUENCE_9 = 9;
     localparam SYNC_BIT = 10;
-    localparam DATA = 11;
+    localparam DATA_BIT = 11;
+    localparam PARITY_BIT = 12;
     localparam ERROR = 50;
 
     // TODO: size...
@@ -37,6 +41,11 @@ module coax_rx (
     reg next_bit_timer_reset;
 
     reg [9:0] next_data;
+
+    reg [9:0] xxx_data;
+    reg [9:0] next_xxx_data;
+    reg [3:0] bit_counter = 0;
+    reg [3:0] next_bit_counter;
 
     wire sample;
     wire synchronized;
@@ -58,7 +67,10 @@ module coax_rx (
 
         next_bit_timer_reset = 0;
 
-        next_data = 10'b0000000000;
+        next_data = data;
+
+        next_bit_counter = bit_counter;
+        next_xxx_data = xxx_data;
 
         case (state)
             IDLE:
@@ -169,7 +181,7 @@ module coax_rx (
                 if (sample && synchronized)
                 begin
                     if (rx)
-                        next_state = DATA;
+                        next_state = DATA_BIT;
                     else
                         next_state = IDLE;
                 end
@@ -181,20 +193,65 @@ module coax_rx (
 
            SYNC_BIT:
            begin
-               // TODO
+               if (sample)
+               begin
+                   if (synchronized)
+                   begin
+                       // ...
+                   end
+                   else
+                   begin
+                       next_data = LOSS_OF_MID_BIT_TRANSITION_ERROR;
+                       next_state = ERROR;
+                   end
+               end
            end
 
-           DATA:
+           DATA_BIT:
            begin
                if (sample)
                begin
                    if (synchronized)
                    begin
-                       // TODO
+                       next_xxx_data = { xxx_data[8:0], rx };
+
+                       if (bit_counter < 9)
+                       begin
+                           next_bit_counter = bit_counter + 1;
+                       end
+                       else
+                       begin
+                           next_state = PARITY_BIT;
+                       end
                    end
                    else
                    begin
-                       next_data = 10'b0000000001; // TODO: LOSS OF MID-BIT TRANSITION
+                       next_data = LOSS_OF_MID_BIT_TRANSITION_ERROR;
+                       next_state = ERROR;
+                   end
+               end
+           end
+
+           PARITY_BIT:
+           begin
+               if (sample)
+               begin
+                   if (synchronized)
+                   begin
+                       // Even parity includes the sync bit.
+                       if (rx == ^{ 1'b1, xxx_data })
+                       begin
+                           next_state = SYNC_BIT;
+                       end
+                       else
+                       begin
+                           next_data = PARITY_ERROR;
+                           next_state = ERROR;
+                       end
+                   end
+                   else
+                   begin
+                       next_data = LOSS_OF_MID_BIT_TRANSITION_ERROR;
                        next_state = ERROR;
                    end
                end
@@ -215,6 +272,9 @@ module coax_rx (
 
         data <= next_data;
 
+        bit_counter <= next_bit_counter;
+        xxx_data <= next_xxx_data;
+
         if (reset)
         begin
             bit_timer_reset = 1;
@@ -223,12 +283,15 @@ module coax_rx (
             state <= IDLE;
 
             data <= 10'b0000000000;
+
+            bit_counter <= 0;
+            xxx_data <= 10'b0000000000;
         end
 
         previous_rx <= rx;
         previous_state <= state;
     end
 
-    assign active = (state >= SYNC_BIT && state <= DATA);
+    assign active = (state >= SYNC_BIT && state <= PARITY_BIT);
     assign error = (state == ERROR);
 endmodule

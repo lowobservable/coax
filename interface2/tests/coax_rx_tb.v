@@ -26,6 +26,7 @@ module coax_rx_tb;
         $dumpfile("coax_rx_tb.vcd");
         $dumpvars(0, coax_rx_tb);
 
+        /*
         test_1;
         test_2;
         test_3;
@@ -36,6 +37,11 @@ module coax_rx_tb;
         test_8;
         test_9;
         test_10;
+        test_11;
+        test_12;
+        test_13;
+        */
+        test_14;
 
         $finish;
     end
@@ -44,13 +50,13 @@ module coax_rx_tb;
     begin
         $display("START: test_1");
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         dut_reset;
 
         #8;
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         $display("END: test_1");
     end
@@ -60,13 +66,13 @@ module coax_rx_tb;
     begin
         $display("START: test_2");
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         rx = 1;
 
         #64;
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         $display("END: test_2");
     end
@@ -76,13 +82,13 @@ module coax_rx_tb;
     begin
         $display("START: test_3");
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         rx_bit(1);
 
         #64;
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         $display("END: test_3");
     end
@@ -92,14 +98,14 @@ module coax_rx_tb;
     begin
         $display("START: test_4");
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         rx_bit(1);
         rx_bit(1);
 
         #64;
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         $display("END: test_4");
     end
@@ -109,7 +115,7 @@ module coax_rx_tb;
     begin
         $display("START: test_5");
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         rx_bit(1);
         rx_bit(1);
@@ -117,7 +123,7 @@ module coax_rx_tb;
 
         #64;
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         $display("END: test_5");
     end
@@ -127,7 +133,7 @@ module coax_rx_tb;
     begin
         $display("START: test_6");
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         rx_bit(1);
         rx_bit(1);
@@ -136,7 +142,7 @@ module coax_rx_tb;
 
         #64;
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         $display("END: test_6");
     end
@@ -146,7 +152,7 @@ module coax_rx_tb;
     begin
         $display("START: test_7");
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         rx_bit(1);
         rx_bit(1);
@@ -156,7 +162,7 @@ module coax_rx_tb;
 
         #64;
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         $display("END: test_7");
     end
@@ -166,7 +172,7 @@ module coax_rx_tb;
     begin
         $display("START: test_8");
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         rx_bit(1);
         rx_bit(1);
@@ -180,7 +186,7 @@ module coax_rx_tb;
 
         #64;
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         $display("END: test_8");
     end
@@ -190,7 +196,7 @@ module coax_rx_tb;
     begin
         $display("START: test_9");
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         rx_start_sequence;
 
@@ -198,7 +204,7 @@ module coax_rx_tb;
 
         #64;
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         $display("END: test_9");
     end
@@ -208,7 +214,7 @@ module coax_rx_tb;
     begin
         $display("START: test_10");
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         rx_start_sequence;
         rx_bit(1); // SYNC_BIT
@@ -218,14 +224,156 @@ module coax_rx_tb;
         `assert_equal(dut.state, dut.ERROR, "State should be ERROR");
 
         `assert_high(dut.error, "error should be HIGH");
+        `assert_equal(dut.data, dut.LOSS_OF_MID_BIT_TRANSITION_ERROR, "data should be LOSS_OF_MID_BIT_TRANSITION_ERROR");
 
         dut_reset;
 
         #16;
 
-        `assert_equal(dut.state, dut.IDLE, "State should be IDLE");
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
         $display("END: test_10");
+    end
+    endtask
+
+    task test_11;
+    begin
+        $display("START: test_11");
+
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
+
+        rx_start_sequence;
+        rx_bit(1); // SYNC_BIT
+        rx_bit(0); // MSB DATA_BIT
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(0);
+        rx_bit(1);
+
+        #64;
+
+        `assert_equal(dut.state, dut.ERROR, "State should be ERROR");
+
+        `assert_high(dut.error, "error should be HIGH");
+        `assert_equal(dut.data, dut.LOSS_OF_MID_BIT_TRANSITION_ERROR, "data should be LOSS_OF_MID_BIT_TRANSITION_ERROR");
+
+        dut_reset;
+
+        #16;
+
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
+
+        $display("END: test_11");
+    end
+    endtask
+
+    task test_12;
+    begin
+        $display("START: test_12");
+
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
+
+        rx_start_sequence;
+        rx_bit(1); // SYNC_BIT
+        rx_bit(0); // MSB DATA_BIT
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(0);
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(0);
+        rx_bit(0);
+        rx_bit(1);
+        rx_bit(1); // LSB DATA_BIT
+
+        #64;
+
+        `assert_equal(dut.state, dut.ERROR, "State should be ERROR");
+
+        `assert_high(dut.error, "error should be HIGH");
+        `assert_equal(dut.data, dut.LOSS_OF_MID_BIT_TRANSITION_ERROR, "data should be LOSS_OF_MID_BIT_TRANSITION_ERROR");
+
+        dut_reset;
+
+        #16;
+
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
+
+        $display("END: test_12");
+    end
+    endtask
+
+    task test_13;
+    begin
+        $display("START: test_13");
+
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
+
+        rx_start_sequence;
+        rx_bit(1); // SYNC_BIT
+        rx_bit(0); // MSB DATA_BIT
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(0);
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(0);
+        rx_bit(0);
+        rx_bit(1);
+        rx_bit(1); // LSB DATA_BIT
+        rx_bit(0); // PARITY_BIT
+
+        #64;
+
+        `assert_equal(dut.state, dut.ERROR, "State should be ERROR");
+
+        `assert_high(dut.error, "error should be HIGH");
+        `assert_equal(dut.data, dut.PARITY_ERROR, "data should be PARITY_ERROR");
+
+        dut_reset;
+
+        #16;
+
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
+
+        $display("END: test_13");
+    end
+    endtask
+
+    task test_14;
+    begin
+        $display("START: test_14");
+
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
+
+        rx_start_sequence;
+        rx_bit(1); // SYNC_BIT
+        rx_bit(0); // MSB DATA_BIT
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(0);
+        rx_bit(1);
+        rx_bit(1);
+        rx_bit(0);
+        rx_bit(0);
+        rx_bit(1);
+        rx_bit(1); // LSB DATA_BIT
+        rx_bit(1); // PARITY_BIT
+
+        #64;
+
+        `assert_equal(dut.state, dut.ERROR, "State should be ERROR");
+
+        `assert_high(dut.error, "error should be HIGH");
+        `assert_equal(dut.data, dut.LOSS_OF_MID_BIT_TRANSITION_ERROR, "data should be LOSS_OF_MID_BIT_TRANSITION_ERROR");
+
+        dut_reset;
+
+        #16;
+
+        `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
+
+        $display("END: test_14");
     end
     endtask
 
