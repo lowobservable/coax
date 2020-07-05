@@ -8,6 +8,9 @@ module top (
     output rx_active,
     output rx_error,
 
+    // Shared data bus
+    inout [9:0] data,
+
     input reset,
     output debug,
 
@@ -40,6 +43,8 @@ module top (
         rx_1 <= rx_0;
     end
 
+    wire [9:0] rx_data;
+
     coax_rx #(
         .CLOCKS_PER_BIT(16)
     ) coax_rx (
@@ -47,8 +52,11 @@ module top (
         .rx(rx_1),
         .reset(reset),
         .active(rx_active),
-        .error(rx_error)
+        .error(rx_error),
+        .data(rx_data)
     );
+
+    assign data = rx_data;
 
     assign debug = rx_1;
 

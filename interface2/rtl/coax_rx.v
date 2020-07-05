@@ -34,8 +34,8 @@ module coax_rx (
     reg [3:0] state = IDLE;
     reg [3:0] next_state;
     reg [3:0] previous_state;
-    reg [3:0] state_counter;
-    reg [3:0] next_state_counter;
+    reg [7:0] state_counter;
+    reg [7:0] next_state_counter;
 
     reg previous_rx;
 
