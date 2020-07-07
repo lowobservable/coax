@@ -1,59 +1,26 @@
 #include <Arduino.h>
 
-#define RESET_PIN 2 // FPGA #9
+#include <NewCoax.h>
 
-char buffer[20 + 1];
-int bufferIndex = 0;
+NewCoaxDataBus dataBus;
+NewCoaxReceiver receiver(dataBus);
 
-void doReset()
-{
-    Serial.println("RESET");
-
-    digitalWrite(RESET_PIN, HIGH);
-    digitalWrite(RESET_PIN, LOW);
-
-    Serial.println("OK");
-}
+uint16_t buffer[1024];
 
 void setup()
 {
-    pinMode(RESET_PIN, OUTPUT);
-
-    digitalWrite(RESET_PIN, LOW);
-
     Serial.begin(115200);
 
     while (Serial.available() > 0) {
         Serial.read();
     }
 
-    Serial.println("OK");
+    receiver.begin();
 }
 
 void loop()
 {
-    if (Serial.available() > 0) {
-        uint8_t byte = Serial.read();
+    int count = receiver.receive(buffer, 1024, 1000);
 
-        if (byte == '\r') {
-            buffer[bufferIndex] = 0;
-
-            Serial.println();
-
-            if (strncmp(buffer, "reset", 20) == 0) {
-                doReset();
-            } else {
-                Serial.println("UNRECOGNIZED COMMAND");
-            }
-
-            Serial.flush();
-
-            bufferIndex = 0;
-        } else {
-            buffer[bufferIndex++] = byte;
-        }
-
-        Serial.write(byte);
-        Serial.flush();
-    }
+    Serial.println(count);
 }
