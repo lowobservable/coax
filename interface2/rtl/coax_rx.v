@@ -4,8 +4,8 @@ module coax_rx (
     input clk,
     input rx,
     input reset,
-    output active,
-    output error,
+    output reg active,
+    output reg error,
     output reg [9:0] data,
     output reg data_available = 0,
     input read
@@ -51,6 +51,9 @@ module coax_rx (
     reg [9:0] next_internal_data;
     reg [3:0] bit_counter = 0;
     reg [3:0] next_bit_counter;
+
+    reg next_active;
+    reg next_error;
 
     reg previous_read;
 
@@ -308,6 +311,12 @@ module coax_rx (
         endcase
     end
 
+    always @(*)
+    begin
+        next_active = (next_state >= SYNC_BIT && next_state <= PARITY_BIT);
+        next_error = (next_state == ERROR);
+    end
+
     always @(posedge clk)
     begin
         state <= next_state;
@@ -321,6 +330,9 @@ module coax_rx (
         internal_data <= next_internal_data;
         bit_counter <= next_bit_counter;
 
+        active <= next_active;
+        error <= next_error;
+
         if (reset)
         begin
             bit_timer_reset <= 1;
@@ -333,6 +345,9 @@ module coax_rx (
 
             internal_data <= 10'b0000000000;
             bit_counter <= 0;
+
+            active <= 0;
+            error <= 0;
         end
         else if (data_available && !read && previous_read)
         begin
@@ -343,7 +358,4 @@ module coax_rx (
         previous_state <= state;
         previous_read <= read;
     end
-
-    assign active = (state >= SYNC_BIT && state <= PARITY_BIT);
-    assign error = (state == ERROR);
 endmodule
