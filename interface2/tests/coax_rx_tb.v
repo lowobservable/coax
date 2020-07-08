@@ -5,8 +5,10 @@
 module coax_rx_tb;
     reg clk = 0;
 
-    initial begin
-        forever begin
+    initial
+    begin
+        forever
+        begin
             #1 clk <= ~clk;
         end
     end
@@ -24,7 +26,8 @@ module coax_rx_tb;
         .read(read)
     );
 
-    initial begin
+    initial
+    begin
         $dumpfile("coax_rx_tb.vcd");
         $dumpvars(0, coax_rx_tb);
 

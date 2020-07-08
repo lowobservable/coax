@@ -3,8 +3,10 @@
 module coax_rx_bit_timer_tb;
     reg clk = 0;
 
-    initial begin
-        forever begin
+    initial
+    begin
+        forever
+        begin
             #1 clk <= ~clk;
         end
     end
@@ -24,7 +26,8 @@ module coax_rx_bit_timer_tb;
         .synchronized(synchronized)
     );
 
-    initial begin
+    initial
+    begin
         $dumpfile("coax_rx_bit_timer_tb.vcd");
         $dumpvars(0, coax_rx_bit_timer_tb);
 
