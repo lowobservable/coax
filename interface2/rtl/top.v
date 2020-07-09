@@ -3,8 +3,18 @@
 module top (
     input clk_16mhz,
 
+    input reset,
+
+    // Transmitter
+    output tx_active,
+    // tx_inverted
+    // tx_delay
+    input tx_load,
+    output tx_full,
+
     // Receiver
     input rx,
+    input rx_enable,
     output rx_active,
     output rx_error,
     output rx_data_available,
@@ -13,7 +23,6 @@ module top (
     // Shared data bus
     inout [9:0] data,
 
-    input reset,
     output debug,
 
     output usb_pu
@@ -36,6 +45,9 @@ module top (
         .PLLOUTCORE(clk_38mhz)
     );
 
+    reg tx_load_0 = 0;
+    reg tx_load_1 = 0;
+
     reg rx_0 = 0;
     reg rx_1 = 0;
 
@@ -44,12 +56,32 @@ module top (
 
     always @(posedge clk_38mhz)
     begin
+        tx_load_0 <= tx_load;
+        tx_load_1 <= tx_load_0;
+
         rx_0 <= rx;
         rx_1 <= rx_0;
 
         rx_read_0 <= rx_read;
         rx_read_1 <= rx_read_0;
     end
+
+    wire tx;
+    wire [9:0] tx_data;
+
+    assign tx_data = data;
+
+    coax_tx #(
+        .CLOCKS_PER_BIT(16)
+    ) coax_tx (
+        .clk(clk_38mhz),
+        .reset(reset),
+        .active(tx_active),
+        .tx(tx),
+        .data(tx_data),
+        .load(tx_load_1),
+        .full(tx_full)
+    );
 
     wire [9:0] rx_data;
 
@@ -66,9 +98,9 @@ module top (
         .read(rx_read_1)
     );
 
-    assign data = rx_data;
+    assign data = rx_enable ? rx_data : 10'bzzzzzzzzzz;
 
-    assign debug = rx_1;
+    assign debug = rx_enable ? rx_1 : tx;
 
     assign usb_pu = 0;
 endmodule
