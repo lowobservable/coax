@@ -20,12 +20,13 @@ module coax_tx (
     localparam START_SEQUENCE_6 = 6;
     localparam START_SEQUENCE_7 = 7;
     localparam START_SEQUENCE_8 = 8;
-    localparam SYNC_BIT = 9;
-    localparam DATA_BIT = 10;
-    localparam PARITY_BIT = 11;
-    localparam END_SEQUENCE_1 = 12;
-    localparam END_SEQUENCE_2 = 13;
-    localparam END_SEQUENCE_3 = 14;
+    localparam START_SEQUENCE_9 = 9;
+    localparam SYNC_BIT = 10;
+    localparam DATA_BIT = 11;
+    localparam PARITY_BIT = 12;
+    localparam END_SEQUENCE_1 = 13;
+    localparam END_SEQUENCE_2 = 14;
+    localparam END_SEQUENCE_3 = 15;
 
     reg [3:0] state = IDLE;
     reg [3:0] next_state;
@@ -106,10 +107,14 @@ module coax_tx (
 
             START_SEQUENCE_1:
             begin
-                next_tx = first_half ? 0 : 1;
+                next_tx = 1;
 
-                if (last_clock)
+                // TODO... off by 1
+                if (second_half)
+                begin
+                    next_bit_timer_reset = 1;
                     next_state = START_SEQUENCE_2;
+                end
             end
 
             START_SEQUENCE_2:
@@ -146,7 +151,7 @@ module coax_tx (
 
             START_SEQUENCE_6:
             begin
-                next_tx = 0;
+                next_tx = first_half ? 0 : 1;
 
                 if (last_clock)
                     next_state = START_SEQUENCE_7;
@@ -154,13 +159,21 @@ module coax_tx (
 
             START_SEQUENCE_7:
             begin
-                next_tx = first_half ? 0 : 1;
+                next_tx = 0;
 
                 if (last_clock)
                     next_state = START_SEQUENCE_8;
             end
 
             START_SEQUENCE_8:
+            begin
+                next_tx = first_half ? 0 : 1;
+
+                if (last_clock)
+                    next_state = START_SEQUENCE_9;
+            end
+
+            START_SEQUENCE_9:
             begin
                 next_tx = 1;
 
@@ -291,5 +304,5 @@ module coax_tx (
         previous_load <= load;
     end
 
-    assign full = holding_data_full;
+    assign full = holding_data_full; // TODO: also after bit 10 if holding is empty...
 endmodule

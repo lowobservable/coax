@@ -5,8 +5,8 @@ set_io --warn-no-port reset D2 # 6
 
 # Transmitter
 set_io --warn-no-port tx_active A2 # 1
-#set_io --warn-no-port tx_inverted A1 # 2
-#set_io --warn-no-port tx_delay B1 # 3
+set_io --warn-no-port tx_inverted A1 # 2
+set_io --warn-no-port tx_delay B1 # 3
 set_io --warn-no-port tx_load D1 # 7
 set_io --warn-no-port tx_full E2 # 8
 

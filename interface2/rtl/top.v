@@ -7,8 +7,8 @@ module top (
 
     // Transmitter
     output tx_active,
-    // tx_inverted
-    // tx_delay
+    output tx_delay,
+    output tx_inverted,
     input tx_load,
     output tx_full,
 
@@ -66,7 +66,8 @@ module top (
         rx_read_1 <= rx_read_0;
     end
 
-    wire tx;
+    wire tx_active_undistorted;
+    wire tx_undistorted;
     wire [9:0] tx_data;
 
     assign tx_data = data;
@@ -76,11 +77,25 @@ module top (
     ) coax_tx (
         .clk(clk_38mhz),
         .reset(reset),
-        .active(tx_active),
-        .tx(tx),
+        .active(tx_active_undistorted),
+        .tx(tx_undistorted),
         .data(tx_data),
         .load(tx_load_1),
         .full(tx_full)
+    );
+
+    wire tx;
+
+    coax_tx_distorter #(
+        .CLOCKS_PER_BIT(16)
+    ) coax_tx_distorter (
+        .clk(clk_38mhz),
+        .active_input(tx_active_undistorted),
+        .tx_input(tx_undistorted),
+        .active_output(tx_active),
+        .tx_output(tx),
+        .tx_delay(tx_delay),
+        .tx_inverted(tx_inverted)
     );
 
     wire [9:0] rx_data;
