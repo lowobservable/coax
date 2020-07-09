@@ -104,7 +104,7 @@ module top (
         .CLOCKS_PER_BIT(16)
     ) coax_rx (
         .clk(clk_38mhz),
-        .rx(rx_1),
+        .rx(rx_enable ? rx_1 : 0),
         .reset(reset),
         .active(rx_active),
         .error(rx_error),
