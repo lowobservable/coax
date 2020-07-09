@@ -2,12 +2,17 @@
 
 #include <NewCoax.h>
 
-//#define RX_ENABLE_PIN 4
-#define RX_RESET_PIN 4
-#define RX_ACTIVE_PIN 5
-#define RX_ERROR_PIN 6
-#define RX_DATA_AVAILABLE_PIN 7
-#define RX_READ_PIN 8
+#define RESET_PIN 4
+
+#define TX_ACTIVE_PIN 5
+#define TX_LOAD_PIN 6
+#define TX_FULL_PIN 7
+
+#define RX_ENABLE_PIN 8
+#define RX_ACTIVE_PIN 9
+#define RX_ERROR_PIN 10
+#define RX_DATA_AVAILABLE_PIN 11
+#define RX_READ_PIN 12
 
 #define DATA_BUS_START_PIN 14
 #define DATA_BUS_END_PIN 23
@@ -42,12 +47,72 @@ void rxDataAvailableInterrupt()
     receiver->dataAvailableInterrupt();
 }
 
+void NewCoaxTransmitter::begin()
+{
+    pinMode(RESET_PIN, OUTPUT);
+
+    pinMode(TX_ACTIVE_PIN, INPUT);
+    pinMode(TX_LOAD_PIN, OUTPUT);
+    pinMode(TX_FULL_PIN, INPUT);
+}
+
+int NewCoaxTransmitter::transmit(uint16_t *buffer, size_t bufferCount)
+{
+    if (digitalRead(RX_ACTIVE_PIN)) {
+        return ERROR_TX_RECEIVER_ACTIVE;
+    }
+
+    _receiver.disable();
+
+    _dataBus.setMode(OUTPUT);
+
+    for (int index = 0; index < bufferCount; index++) {
+        uint16_t word = _dataBus.encode(buffer[index]);
+
+        while (digitalRead(TX_FULL_PIN)) {
+            // NOP
+        }
+
+        write(word);
+
+        // TODO: the Teensy, too fast!
+        delayMicroseconds(2);
+    }
+
+    while (digitalRead(TX_ACTIVE_PIN)) {
+        // NOP
+    }
+
+    _dataBus.setMode(INPUT);
+
+    return bufferCount;
+}
+
+void NewCoaxTransmitter::reset()
+{
+    digitalWrite(RESET_PIN, HIGH);
+    delayMicroseconds(1);
+    digitalWrite(RESET_PIN, LOW);
+}
+
+inline void NewCoaxTransmitter::write(uint16_t word)
+{
+    digitalWrite(TX_LOAD_PIN, HIGH);
+
+    _dataBus.write(word);
+
+    delayMicroseconds(1);
+
+    digitalWrite(TX_LOAD_PIN, LOW);
+}
+
 void NewCoaxReceiver::begin()
 {
     receiver = this;
 
-    //pinMode(RX_ENABLE_PIN, OUTPUT);
-    pinMode(RX_RESET_PIN, OUTPUT);
+    pinMode(RESET_PIN, OUTPUT);
+
+    pinMode(RX_ENABLE_PIN, OUTPUT);
     pinMode(RX_ACTIVE_PIN, INPUT);
     pinMode(RX_ERROR_PIN, INPUT);
     pinMode(RX_DATA_AVAILABLE_PIN, INPUT);
@@ -64,12 +129,12 @@ void NewCoaxReceiver::enable()
 
     _state = Idle;
 
-    //digitalWrite(RX_ENABLE_PIN, HIGH);
+    digitalWrite(RX_ENABLE_PIN, HIGH);
 }
 
 void NewCoaxReceiver::disable()
 {
-    //digitalWrite(RX_ENABLE_PIN, LOW);
+    digitalWrite(RX_ENABLE_PIN, LOW);
 
     _state = Disabled;
 }
@@ -181,9 +246,9 @@ void NewCoaxReceiver::errorInterrupt()
 
 void NewCoaxReceiver::reset()
 {
-    digitalWrite(RX_RESET_PIN, HIGH);
+    digitalWrite(RESET_PIN, HIGH);
     delayMicroseconds(1);
-    digitalWrite(RX_RESET_PIN, LOW);
+    digitalWrite(RESET_PIN, LOW);
 }
 
 inline uint16_t NewCoaxReceiver::read()

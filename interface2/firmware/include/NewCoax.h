@@ -1,10 +1,30 @@
 #pragma once
 
+#define ERROR_TX_RECEIVER_ACTIVE -1
+
 #define ERROR_RX_RECEIVER_ACTIVE -5
 #define ERROR_RX_TIMEOUT -2
 #define ERROR_RX_OVERFLOW -3
 
+class NewCoaxReceiver;
 class NewCoaxDataBus;
+
+class NewCoaxTransmitter
+{
+public:
+    NewCoaxTransmitter(NewCoaxDataBus &dataBus, NewCoaxReceiver &receiver) :
+        _dataBus(dataBus), _receiver(receiver) { };
+
+    void begin();
+    int transmit(uint16_t *buffer, size_t bufferCount);
+
+private:
+    NewCoaxDataBus &_dataBus;
+    NewCoaxReceiver &_receiver;
+
+    void reset();
+    void write(uint16_t word);
+};
 
 enum NewCoaxReceiverState { Disabled, Idle, Receiving, Received };
 
