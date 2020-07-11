@@ -73,6 +73,8 @@ public:
     void setMode(int mode);
     uint16_t read();
     void write(uint16_t word);
+
+private:
     uint16_t encode(uint16_t word);
     uint16_t decode(uint16_t word);
 };

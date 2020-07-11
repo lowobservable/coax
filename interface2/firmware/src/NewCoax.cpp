@@ -81,13 +81,11 @@ int NewCoaxTransmitter::transmit(uint16_t *buffer, size_t bufferCount)
     _dataBus.setMode(OUTPUT);
 
     for (int index = 0; index < bufferCount; index++) {
-        uint16_t word = _dataBus.encode(buffer[index]);
-
         while (digitalRead(TX_FULL_PIN)) {
             // NOP
         }
 
-        write(word);
+        write(buffer[index]);
 
         // TODO: the Teensy, too fast!
         delayMicroseconds(2);
@@ -202,11 +200,6 @@ int NewCoaxReceiver::receive(uint16_t *buffer, size_t bufferSize, uint16_t timeo
         return ERROR_RX_OVERFLOW;
     }
 
-    // Unscramble the data.
-    for (int index = 0; index < count; index++) {
-        buffer[index] = _dataBus.decode(buffer[index]);
-    }
-
     return count;
 }
 
@@ -249,7 +242,7 @@ void NewCoaxReceiver::dataAvailableInterrupt()
 
 void NewCoaxReceiver::errorInterrupt()
 {
-    _error = _dataBus.decode(read());
+    _error = _dataBus.read();
 
     if (_state == Receiving) {
         _state = Received;
@@ -287,12 +280,12 @@ void NewCoaxDataBus::setMode(int mode)
 
 inline uint16_t NewCoaxDataBus::read()
 {
-    return (GPIO6_DR & DATA_BUS_MASK) >> 16;
+    return decode((GPIO6_DR & DATA_BUS_MASK) >> 16);
 }
 
 inline void NewCoaxDataBus::write(uint16_t word)
 {
-    uint32_t bus = (word << 16) & DATA_BUS_MASK;
+    uint32_t bus = (encode(word) << 16) & DATA_BUS_MASK;
 
     GPIO6_DR_SET = bus;
     GPIO6_DR_CLEAR = ~bus;
