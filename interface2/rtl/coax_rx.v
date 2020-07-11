@@ -99,17 +99,10 @@ module coax_rx (
         case (state)
             IDLE:
             begin
-                // TODO: should I move this to all the IDLE transitions?
-                if (previous_state != IDLE)
-                    next_bit_timer_reset = 1;
+                next_bit_timer_reset = 1;
 
-                if (rx != previous_rx)
-                begin
-                    if (rx && !previous_rx)
-                        next_state = START_SEQUENCE_1;
-                    else
-                        next_bit_timer_reset = 1;
-                end
+                if (!rx && previous_rx)
+                    next_state = START_SEQUENCE_1;
             end
 
             START_SEQUENCE_1:
@@ -120,6 +113,10 @@ module coax_rx (
                         next_state = START_SEQUENCE_2;
                     else
                         next_state = IDLE;
+                end
+                else if (state_counter >= (CLOCKS_PER_BIT * 2))
+                begin
+                    next_state = IDLE;
                 end
             end
 
@@ -319,8 +316,10 @@ module coax_rx (
 
            END_SEQUENCE_2:
            begin
-               // TODO: Let's do more!
-               next_state = IDLE;
+               if (!rx)
+                   next_state = IDLE;
+               else if (state_counter >= (CLOCKS_PER_BIT * 2))
+                   next_state = IDLE;
            end
         endcase
     end

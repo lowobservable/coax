@@ -90,6 +90,10 @@ module coax_rx_tb;
 
         `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
+        rx = 1;
+        #16;
+        rx = 0;
+
         rx_bit(1);
 
         #64;
@@ -105,6 +109,10 @@ module coax_rx_tb;
         $display("START: test_4");
 
         `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
+
+        rx = 1;
+        #16;
+        rx = 0;
 
         rx_bit(1);
         rx_bit(1);
@@ -122,6 +130,10 @@ module coax_rx_tb;
         $display("START: test_5");
 
         `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
+
+        rx = 1;
+        #16;
+        rx = 0;
 
         rx_bit(1);
         rx_bit(1);
@@ -141,6 +153,10 @@ module coax_rx_tb;
 
         `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
+        rx = 1;
+        #16;
+        rx = 0;
+
         rx_bit(1);
         rx_bit(1);
         rx_bit(1);
@@ -159,6 +175,10 @@ module coax_rx_tb;
         $display("START: test_7");
 
         `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
+
+        rx = 1;
+        #16;
+        rx = 0;
 
         rx_bit(1);
         rx_bit(1);
@@ -180,6 +200,10 @@ module coax_rx_tb;
 
         `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
 
+        rx = 1;
+        #16;
+        rx = 0;
+
         rx_bit(1);
         rx_bit(1);
         rx_bit(1);
@@ -193,6 +217,8 @@ module coax_rx_tb;
         #64;
 
         `assert_equal(dut.state, dut.IDLE, "state should be IDLE");
+
+        rx = 0;
 
         $display("END: test_8");
     end
@@ -530,6 +556,12 @@ module coax_rx_tb;
 
     task rx_start_sequence;
     begin
+        rx = 0;
+        #16;
+        rx = 1;
+        #16;
+        rx = 0;
+
         rx_bit(1);
         rx_bit(1);
         rx_bit(1);
