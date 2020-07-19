@@ -11,7 +11,7 @@ from .parity import odd_parity
 class Command(Enum):
     """Terminal command."""
 
-    # Read Commands
+    # Base
     POLL = 0x01
     POLL_ACK = 0x11
     READ_STATUS = 0x0d
@@ -22,7 +22,6 @@ class Command(Enum):
     READ_DATA = 0x03
     READ_MULTIPLE = 0x0b
 
-    # Write Commands
     RESET = 0x02
     LOAD_CONTROL_REGISTER = 0x0a
     LOAD_SECONDARY_CONTROL = 0x1a
@@ -36,6 +35,17 @@ class Command(Enum):
     INSERT_BYTE = 0x0e
     START_OPERATION = 0x08
     DIAGNOSTIC_RESET = 0x1c
+
+    # Feature
+    READ_FEATURE_ID = 0x07
+
+    # EAB Feature
+    EAB_READ_DATA = 0x03
+    EAB_LOAD_MASK = 0x05
+    EAB_WRITE_ALTERNATE = 0x0a
+    EAB_READ_MULTIPLE = 0x0b
+    EAB_WRITE_UNDER_MASK = 0x0c
+    EAB_READ_STATUS = 0x0d
 
 class PollAction(Enum):
     """Terminal POLL action."""
@@ -326,22 +336,61 @@ def diagnostic_reset(interface):
     """Execute a DIAGNOSTIC_RESET command."""
     raise NotImplementedError
 
-def pack_command_word(command):
+def read_feature_id(interface, feature_address, **kwargs):
+    """Execute a READ_FEATURE_ID command."""
+    command_word = pack_command_word(Command.READ_FEATURE_ID, feature_address)
+
+    response = _execute_read_command(interface, command_word, 1, allow_trta_response=True,
+                                     **kwargs)
+
+    if response is None:
+        return None
+
+    return response[0]
+
+def eab_read_data(interface, feature_address, **kwargs):
+    """Execute a EAB_READ_DATA command."""
+    command_word = pack_command_word(Command.EAB_READ_DATA, feature_address)
+
+    return _execute_read_command(interface, command_word, **kwargs)
+
+def eab_load_mask(interface, feature_address, mask, **kwargs):
+    """Execute a EAB_LOAD_MASK command."""
+    command_word = pack_command_word(Command.EAB_LOAD_MASK, feature_address)
+
+    _execute_write_command(interface, command_word, bytes([mask]), **kwargs)
+
+def eab_write_alternate(interface, feature_address, data, **kwargs):
+    """Execute a EAB_WRITE_ALTERNATE command."""
+    command_word = pack_command_word(Command.EAB_WRITE_ALTERNATE, feature_address)
+
+    _execute_write_command(interface, command_word, data, **kwargs)
+
+def eab_read_multiple(interface, feature_address, **kwargs):
+    """Execute a EAB_READ_MULTIPLE command."""
+    command_word = pack_command_word(Command.EAB_READ_MULTIPLE, feature_address)
+
+    return _execute_read_command(interface, command_word, 32,
+                                 validate_response_length=False, **kwargs)
+
+def eab_write_under_mask(interface, feature_address, byte, **kwargs):
+    """Execute a EAB_WRITE_UNDER_MASK command."""
+    command_word = pack_command_word(Command.EAB_WRITE_UNDER_MASK, feature_address)
+
+    _execute_write_command(interface, command_word, bytes([byte]), **kwargs)
+
+def eab_read_status(interface, feature_address, **kwargs):
+    """Execute a EAB_READ_STATUS command."""
+    command_word = pack_command_word(Command.EAB_READ_STATUS, feature_address)
+
+    return _execute_read_command(interface, command_word, **kwargs)[0]
+
+def pack_command_word(command, feature_address=None):
     """Pack a command into a 10-bit command word."""
-    return (command.value << 2) | 0x1
+    if feature_address is not None and (feature_address < 2 or feature_address > 15):
+        raise ValueError(f'Invalid feature address: {feature_address}')
 
-def is_command_word(word):
-    """Is command word bit set?"""
-    return (word & 0x1) == 1
-
-def unpack_command_word(word):
-    """Unpack a 10-bit command word."""
-    if not is_command_word(word):
-        raise ProtocolError(f'Word does not have command bit set: {word}')
-
-    command = (word >> 2) & 0x1f
-
-    return Command(command)
+    return (feature_address << 6 if feature_address is not None else 0) | (command.value << 2) | 0x1
 
 def pack_data_word(byte, set_parity=True):
     """Pack a data byte into a 10-bit data word."""
@@ -385,10 +434,7 @@ def _execute_read_command(interface, command_word, response_length=1,
         return trta_value
 
     if validate_response_length and len(response) != response_length:
-        command = unpack_command_word(command_word)
-
-        raise ProtocolError((f'Expected {response_length} word {command.name} '
-                             f'response: {response}'))
+        raise ProtocolError((f'Expected {response_length} word response: {response}'))
 
     return unpack_data_words(response) if unpack else response
 
@@ -408,9 +454,7 @@ def _execute_write_command(interface, command_word, data=None, **kwargs):
                                           receive_length=1, **kwargs)
 
     if len(response) != 1:
-        command = unpack_command_word(command_word)
-
-        raise ProtocolError(f'Expected 1 word {command.name} response: {response}')
+        raise ProtocolError(f'Expected 1 word response: {response}')
 
     if response[0] != 0:
         raise ProtocolError(f'Expected TR/TA response: {response}')

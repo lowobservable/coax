@@ -31,7 +31,19 @@ from .protocol import (
     search_backward,
     insert_byte,
     start_operation,
-    diagnostic_reset
+    diagnostic_reset,
+    read_feature_id,
+    eab_read_data,
+    eab_load_mask,
+    eab_write_alternate,
+    eab_read_multiple,
+    eab_write_under_mask,
+    eab_read_status
+)
+
+from .features import (
+    Feature,
+    get_features
 )
 
 from .exceptions import (

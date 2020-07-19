@@ -4,7 +4,7 @@ from unittest.mock import Mock
 import context
 
 from coax import PollResponse, KeystrokePollResponse, ProtocolError
-from coax.protocol import Command, Status, TerminalType, TerminalId, Control, SecondaryControl, pack_command_word, unpack_command_word, pack_data_word, unpack_data_word, pack_data_words, unpack_data_words, _execute_read_command, _execute_write_command
+from coax.protocol import Command, Status, TerminalType, TerminalId, Control, SecondaryControl, pack_command_word, pack_data_word, unpack_data_word, pack_data_words, unpack_data_words, _execute_read_command, _execute_write_command
 
 class PollResponseTestCase(unittest.TestCase):
     def test_is_power_on_reset_complete(self):
@@ -108,18 +108,6 @@ class PackCommandWordTestCase(unittest.TestCase):
     def test(self):
         self.assertEqual(pack_command_word(Command.POLL_ACK), 0b0001000101)
 
-class UnpackCommandWordTestCase(unittest.TestCase):
-    def test(self):
-        # Act
-        command = unpack_command_word(0b0001000101)
-
-        # Assert
-        self.assertEqual(command, Command.POLL_ACK)
-
-    def test_command_bit_not_set_error(self):
-        with self.assertRaisesRegex(ProtocolError, 'Word does not have command bit set'):
-            unpack_command_word(0b0001000100)
-
 class PackDataWordTestCase(unittest.TestCase):
     def test(self):
         self.assertEqual(pack_data_word(0x00), 0b0000000010)
@@ -190,7 +178,7 @@ class ExecuteReadCommandTestCase(unittest.TestCase):
         self.interface.transmit_receive = Mock(return_value=[])
 
         # Act and assert
-        with self.assertRaisesRegex(ProtocolError, 'Expected 1 word READ_TERMINAL_ID response'):
+        with self.assertRaisesRegex(ProtocolError, 'Expected 1 word response'):
             _execute_read_command(self.interface, command_word)
 
     def test_receive_timeout_is_passed_to_interface(self):
@@ -225,7 +213,7 @@ class ExecuteWriteCommandTestCase(unittest.TestCase):
         self.interface.transmit_receive = Mock(return_value=[])
 
         # Act and assert
-        with self.assertRaisesRegex(ProtocolError, 'Expected 1 word WRITE_DATA response'):
+        with self.assertRaisesRegex(ProtocolError, 'Expected 1 word response'):
             _execute_write_command(self.interface, command_word, bytes.fromhex('de ad be ef'))
 
     def test_not_trta_response(self):
