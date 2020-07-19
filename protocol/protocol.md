@@ -187,6 +187,22 @@ implemented as a second buffer that shadows the regen buffer; this buffer only
 contains extended attribute bytes that control the formatting of the characters
 in the regen buffer - it does not include any characters.
 
+An extended attribute byte is considered an Extended Field Attribute (EFA) if
+the byte shadows an attribute byte in the regen buffer, or an Extended
+Character Attribute (ECA) if it shadows a character byte.
+
+| Bit |  7  |  6  |  5  |  4  |  3  |  2  |  1  |  0  |
+| --- |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+|     | _M_ | _M_ | _C_ | _C_ | _C_ | _S_ | _S_ | _S_ |
+
+Bits:
+
+| Bits      | Description |
+| --------- | ----------- |
+| 7-6 (`M`) | `00` - normal (or most recent EFA)<br>`01` - blink<br>`10` - reverse<br>`11` - underline |
+| 5-3 (`C`) | `000` - base color (or most recent EFA)<br>`001` - blue<br>`010` - red<br>`011` - pink<br>`100` - green<br>`101` - turquoise<br>`110` - yellow<br>`111` - white |
+| 2-0 (`S`) | `000` - base (or most recent EFA)<br>`001` - APL<br>`010` - PS 2<br>`011` - PS 3<br>`100` - PS 4<br>`101` - PS 5<br>`110` - PS 6<br>`111` - PS 7 |
+
 ### Keyboard
 
 Keypresses are stored in a FIFO buffer. If there are any keypresses, the scan
@@ -217,33 +233,37 @@ Registers can be read-only, write-only, or read-write.
 
 ### Commands
 
-| Feature | Command | 9 | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 | Value |
-| ------- | ------- |:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-----:|
-| Base | `POLL` | _X_ | _X_ | `0` | `0` | `0` | `0` | `0` | `1` | `0` | `1` | `0x01` |
-| Base | `POLL_ACK` | `0` | `0` | `0` | `1` | `0` | `0` | `0` | `1` | `0` | `1` | `0x11` |
-| Base | `READ_STATUS` | `0` | `0` | `0` | `0` | `1` | `1` | `0` | `1` | `0` | `1` | `0x0d` |
-| Base | `READ_TERMINAL_ID` | `0` | `0` | `0` | `0` | `1` | `0` | `0` | `1` | `0` | `1` | `0x09` |
-| Base | `READ_EXTENDED_ID` | `0` | `0` | `0` | `0` | `0` | `1` | `1` | `1` | `0` | `1` | `0x07` |
-| Base | `READ_ADDRESS_COUNTER_HI` | `0` | `0` | `0` | `0` | `0` | `1` | `0` | `1` | `0` | `1` | `0x05` |
-| Base | `READ_ADDRESS_COUNTER_LO` | `0` | `0` | `0` | `1` | `0` | `1` | `0` | `1` | `0` | `1` | `0x15` |
-| Base | `READ_DATA` | `0` | `0` | `0` | `0` | `0` | `0` | `1` | `1` | `0` | `1` | `0x03` |
-| Base | `READ_MULTIPLE` | `0` | `0` | `0` | `0` | `1` | `0` | `1` | `1` | `0` | `1` | `0x0b` |
-| Base | `RESET` | `0` | `0` | `0` | `0` | `0` | `0` | `1` | `0` | `0` | `1` | `0x02` |
-| Base | `LOAD_CONTROL_REGISTER` | `0` | `0` | `0` | `0` | `1` | `0` | `1` | `0` | `0` | `1` | `0x0a` |
-| Base | `LOAD_SECONDARY_CONTROL` | `0` | `0` | `0` | `1` | `1` | `0` | `1` | `0` | `0` | `1` | `0x1a` |
-| Base | `LOAD_MASK` | `0` | `0` | `0` | `1` | `0` | `1` | `1` | `0` | `0` | `1` | `0x16` |
-| Base | `LOAD_ADDRESS_COUNTER_HI` | `0` | `0` | `0` | `0` | `0` | `1` | `0` | `0` | `0` | `1` | `0x04` |
-| Base | `LOAD_ADDRESS_COUNTER_LO` | `0` | `0` | `0` | `1` | `0` | `1` | `0` | `0` | `0` | `1` | `0x14` |
-| Base | `WRITE_DATA` | `0` | `0` | `0` | `0` | `1` | `1` | `0` | `0` | `0` | `1` | `0x0c` |
-| Base | `CLEAR` | `0` | `0` | `0` | `0` | `0` | `1` | `1` | `0` | `0` | `1` | `0x06` |
-| Base | `SEARCH_FORWARD` | `0` | `0` | `0` | `1` | `0` | `0` | `0` | `0` | `0` | `1` | `0x10` |
-| Base | `SEARCH_BACKWARD` | `0` | `0` | `0` | `1` | `0` | `0` | `1` | `0` | `0` | `1` | `0x12` |
-| Base | `INSERT_BYTE` | `0` | `0` | `0` | `0` | `1` | `1` | `1` | `0` | `0` | `1` | `0x0e` |
-| Base | `START_OPERATION` | `0` | `0` | `0` | `0` | `1` | `0` | `0` | `0` | `0` | `1` | `0x08` |
-| Base | `DIAGNOSTIC_RESET` | `0` | `0` | `0` | `1` | `1` | `1` | `0` | `0` | `0` | `1` | `0x1c` |
-
-_The hexadecimal value above represents the value of the 8-bit command byte; this is
-bits 9-2 shifted two bits to the right._
+| Feature | Command | 9 | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+| ------- | ------- |:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| Base | `POLL` | _X_ | _X_ | `0` | `0` | `0` | `0` | `0` | `1` | `0` | `1` |
+| Base | `POLL_ACK` | `0` | `0` | `0` | `1` | `0` | `0` | `0` | `1` | `0` | `1` |
+| Base | `READ_STATUS` | `0` | `0` | `0` | `0` | `1` | `1` | `0` | `1` | `0` | `1` |
+| Base | `READ_TERMINAL_ID` | `0` | `0` | `0` | `0` | `1` | `0` | `0` | `1` | `0` | `1` |
+| Base | `READ_EXTENDED_ID` | `0` | `0` | `0` | `0` | `0` | `1` | `1` | `1` | `0` | `1` |
+| Base | `READ_ADDRESS_COUNTER_HI` | `0` | `0` | `0` | `0` | `0` | `1` | `0` | `1` | `0` | `1` |
+| Base | `READ_ADDRESS_COUNTER_LO` | `0` | `0` | `0` | `1` | `0` | `1` | `0` | `1` | `0` | `1` |
+| Base | `READ_DATA` | `0` | `0` | `0` | `0` | `0` | `0` | `1` | `1` | `0` | `1` |
+| Base | `READ_MULTIPLE` | `0` | `0` | `0` | `0` | `1` | `0` | `1` | `1` | `0` | `1` |
+| Base | `RESET` | `0` | `0` | `0` | `0` | `0` | `0` | `1` | `0` | `0` | `1` |
+| Base | `LOAD_CONTROL_REGISTER` | `0` | `0` | `0` | `0` | `1` | `0` | `1` | `0` | `0` | `1` |
+| Base | `LOAD_SECONDARY_CONTROL` | `0` | `0` | `0` | `1` | `1` | `0` | `1` | `0` | `0` | `1` |
+| Base | `LOAD_MASK` | `0` | `0` | `0` | `1` | `0` | `1` | `1` | `0` | `0` | `1` |
+| Base | `LOAD_ADDRESS_COUNTER_HI` | `0` | `0` | `0` | `0` | `0` | `1` | `0` | `0` | `0` | `1` |
+| Base | `LOAD_ADDRESS_COUNTER_LO` | `0` | `0` | `0` | `1` | `0` | `1` | `0` | `0` | `0` | `1` |
+| Base | `WRITE_DATA` | `0` | `0` | `0` | `0` | `1` | `1` | `0` | `0` | `0` | `1` |
+| Base | `CLEAR` | `0` | `0` | `0` | `0` | `0` | `1` | `1` | `0` | `0` | `1` |
+| Base | `SEARCH_FORWARD` | `0` | `0` | `0` | `1` | `0` | `0` | `0` | `0` | `0` | `1` |
+| Base | `SEARCH_BACKWARD` | `0` | `0` | `0` | `1` | `0` | `0` | `1` | `0` | `0` | `1` |
+| Base | `INSERT_BYTE` | `0` | `0` | `0` | `0` | `1` | `1` | `1` | `0` | `0` | `1` |
+| Base | `START_OPERATION` | `0` | `0` | `0` | `0` | `1` | `0` | `0` | `0` | `0` | `1` |
+| Base | `DIAGNOSTIC_RESET` | `0` | `0` | `0` | `1` | `1` | `1` | `0` | `0` | `0` | `1` |
+| All  | `READ_FEATURE_ID` | _F_ | _F_ | _F_ | _F_ | `0` | `1` | `1` | `1` | `0` | `1` |
+| EAB | `READ_DATA` | _F_ | _F_ | _F_ | _F_ | `0` | `0` | `1` | `1` | `0` | `1` |
+| EAB | `LOAD_MASK` | _F_ | _F_ | _F_ | _F_ | `0` | `1` | `0` | `1` | `0` | `1` |
+| EAB | `WRITE_ALTERNATE` | _F_ | _F_ | _F_ | _F_ | `1` | `0` | `1` | `0` | `0` | `1` |
+| EAB | `READ_MULTIPLE` | _F_ | _F_ | _F_ | _F_ | `1` | `0` | `1` | `1` | `0` | `1` |
+| EAB | `WRITE_UNDER_MASK` | _F_ | _F_ | _F_ | _F_ | `1` | `1` | `0` | `0` | `0` | `1` |
+| EAB | `READ_STATUS` | _F_ | _F_ | _F_ | _F_ | `1` | `1` | `0` | `1` | `0` | `1` |
 
 ## References
 
@@ -253,3 +273,4 @@ bits 9-2 shifted two bits to the right._
   * NS DP8340
   * NS DP8341
   * NS DP8344
+  * IRMA Technical Reference
