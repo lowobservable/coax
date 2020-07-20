@@ -23,7 +23,7 @@ NewCoaxTransmitter transmitter(dataBus, receiver);
 
 void CoaxTransceiver::setup()
 {
-    dataBus.setMode(INPUT);
+    dataBus.setMode(INPUT, true);
 
     receiver.begin();
     transmitter.begin();

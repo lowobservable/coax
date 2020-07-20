@@ -78,7 +78,7 @@ int NewCoaxTransmitter::transmit(uint16_t *buffer, size_t bufferCount)
 
     _receiver.disable();
 
-    _dataBus.setMode(OUTPUT);
+    _dataBus.setMode(OUTPUT, true);
 
     for (int index = 0; index < bufferCount; index++) {
         while (digitalRead(TX_FULL_PIN)) {
@@ -91,7 +91,7 @@ int NewCoaxTransmitter::transmit(uint16_t *buffer, size_t bufferCount)
         delayMicroseconds(2);
     }
 
-    _dataBus.setMode(INPUT);
+    _dataBus.setMode(INPUT, true);
 
     while (digitalRead(TX_ACTIVE_PIN)) {
         // NOP
@@ -137,7 +137,7 @@ void NewCoaxReceiver::begin()
 
 void NewCoaxReceiver::enable()
 {
-    _dataBus.setMode(INPUT);
+    _dataBus.setMode(INPUT, false);
 
     _state = Idle;
 
@@ -271,11 +271,17 @@ inline uint16_t NewCoaxReceiver::read()
     return word;
 }
 
-void NewCoaxDataBus::setMode(int mode)
+void NewCoaxDataBus::setMode(uint8_t mode, bool force)
 {
+    if (mode == _mode && !force) {
+        return;
+    }
+
     for (int pin = DATA_BUS_START_PIN; pin <= DATA_BUS_END_PIN; pin++) {
         pinMode(pin, mode);
     }
+
+    _mode = mode;
 }
 
 inline uint16_t NewCoaxDataBus::read()

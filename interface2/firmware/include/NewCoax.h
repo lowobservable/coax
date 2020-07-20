@@ -70,11 +70,13 @@ private:
 class NewCoaxDataBus
 {
 public:
-    void setMode(int mode);
+    void setMode(uint8_t mode, bool force);
     uint16_t read();
     void write(uint16_t word);
 
 private:
+    int _mode = -1;
+
     uint16_t encode(uint16_t word);
     uint16_t decode(uint16_t word);
 };
