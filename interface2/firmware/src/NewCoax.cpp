@@ -91,11 +91,11 @@ int NewCoaxTransmitter::transmit(uint16_t *buffer, size_t bufferCount)
         delayMicroseconds(2);
     }
 
+    _dataBus.setMode(INPUT);
+
     while (digitalRead(TX_ACTIVE_PIN)) {
         // NOP
     }
-
-    _dataBus.setMode(INPUT);
 
     return bufferCount;
 }
