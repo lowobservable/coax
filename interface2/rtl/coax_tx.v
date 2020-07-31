@@ -112,9 +112,10 @@ module coax_tx (
         case (state)
             IDLE:
             begin
+                next_bit_timer_reset = 1;
+
                 if (output_data_full)
                 begin
-                    next_bit_timer_reset = 1;
                     next_state = START_SEQUENCE_1;
                 end
             end
