@@ -16,17 +16,17 @@
 
 #include "NewCoax.h"
 
-#define RESET_PIN 4
+#define RESET_PIN 5 // -> FPGA 6
 
-#define TX_ACTIVE_PIN 5
-#define TX_LOAD_PIN 6
-#define TX_FULL_PIN 7
+#define TX_ACTIVE_PIN 3 // -> FPGA 3
+#define TX_LOAD_PIN 6 // -> FPGA 7
+#define TX_FULL_PIN 7 // -> FPGA 8
 
-#define RX_ENABLE_PIN 8
-#define RX_ACTIVE_PIN 9
-#define RX_ERROR_PIN 10
-#define RX_DATA_AVAILABLE_PIN 11
-#define RX_READ_PIN 12
+#define RX_ENABLE_PIN 8 // -> FPGA 9
+#define RX_ACTIVE_PIN 9 // -> FPGA 10
+#define RX_ERROR_PIN 10 // -> FPGA 11
+#define RX_DATA_AVAILABLE_PIN 11 // -> FPGA 12
+#define RX_READ_PIN 12 // -> FPGA 13
 
 #define DATA_BUS_START_PIN 14
 #define DATA_BUS_END_PIN 23
