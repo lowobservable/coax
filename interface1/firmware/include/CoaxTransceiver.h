@@ -24,7 +24,7 @@ public:
     static void setup();
     static int /* ssize_t */ transmitReceive(uint16_t *transmitBuffer, size_t transmitBufferCount, uint16_t *receiveBuffer, size_t receiveBufferSize, uint16_t receiveTimeout);
 
-private:
+//private:
     static void dataBusSetup();
     static void rxSetup();
     static void txSetup();
