@@ -1,4 +1,5 @@
 more-itertools==8.4.0
+msgpack==1.0.0
 pycoax==0.5.0
 pyserial==3.4
 sliplib==0.5.0
