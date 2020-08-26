@@ -61,63 +61,6 @@ void rxDataAvailableInterrupt()
     receiver->dataAvailableInterrupt();
 }
 
-void NewCoaxTransmitter::begin()
-{
-    pinMode(RESET_PIN, OUTPUT);
-
-    pinMode(TX_ACTIVE_PIN, INPUT);
-    pinMode(TX_LOAD_PIN, OUTPUT);
-    pinMode(TX_FULL_PIN, INPUT);
-}
-
-int NewCoaxTransmitter::transmit(uint16_t *buffer, size_t bufferCount)
-{
-    if (digitalRead(RX_ACTIVE_PIN)) {
-        return ERROR_TX_RECEIVER_ACTIVE;
-    }
-
-    _receiver.disable();
-
-    _dataBus.setMode(OUTPUT, true);
-
-    for (int index = 0; index < bufferCount; index++) {
-        while (digitalRead(TX_FULL_PIN)) {
-            // NOP
-        }
-
-        write(buffer[index]);
-
-        // TODO: the Teensy, too fast!
-        delayMicroseconds(2);
-    }
-
-    _dataBus.setMode(INPUT, true);
-
-    while (digitalRead(TX_ACTIVE_PIN)) {
-        // NOP
-    }
-
-    return bufferCount;
-}
-
-void NewCoaxTransmitter::reset()
-{
-    digitalWrite(RESET_PIN, HIGH);
-    delayMicroseconds(1);
-    digitalWrite(RESET_PIN, LOW);
-}
-
-inline void NewCoaxTransmitter::write(uint16_t word)
-{
-    digitalWrite(TX_LOAD_PIN, HIGH);
-
-    _dataBus.write(word);
-
-    delayMicroseconds(1);
-
-    digitalWrite(TX_LOAD_PIN, LOW);
-}
-
 void NewCoaxReceiver::begin()
 {
     receiver = this;
@@ -151,56 +94,37 @@ void NewCoaxReceiver::disable()
     _state = Disabled;
 }
 
-int NewCoaxReceiver::receive(uint16_t *buffer, size_t bufferSize, uint16_t timeout)
+#define FRAME_END 0xc0
+#define FRAME_ESCAPE 0xdb
+#define FRAME_ESCAPE_END 0xdc
+#define FRAME_ESCAPE_ESCAPE 0xdd
+
+inline void slipWrite(uint8_t value)
 {
-    if (_state != Disabled) {
-        return ERROR_RX_RECEIVER_ACTIVE;
+    if (value == FRAME_END) {
+        Serial.write(FRAME_ESCAPE);
+        Serial.write(FRAME_ESCAPE_END);
+    } else if (value == FRAME_ESCAPE) {
+        Serial.write(FRAME_ESCAPE);
+        Serial.write(FRAME_ESCAPE_ESCAPE);
+    } else {
+        Serial.write(value);
     }
+}
 
-    _error = 0;
-    _buffer = buffer;
-    _bufferSize = bufferSize;
-    _bufferCount = 0;
+inline void slipWrite(uint16_t value)
+{
+    // Byte order consistent with original interface...
+    slipWrite((uint8_t) (value & 0xff));
+    slipWrite((uint8_t) ((value >> 8) & 0xff));
+}
 
-    if (digitalRead(RX_DATA_AVAILABLE_PIN) || digitalRead(RX_ERROR_PIN)) {
-        reset();
-    }
-
-    enable();
-
-    if (timeout > 0) {
-        unsigned long startTime = millis();
-
-        while (_state == Idle) {
-            // https://www.forward.com.au/pfod/ArduinoProgramming/TimingDelaysInArduino.html#unsigned
-            if ((millis() - startTime) > timeout) {
-                disable();
-                return ERROR_RX_TIMEOUT;
-            }
-        }
-    }
-
-    while (_state != Received) {
-        // NOP
-    }
-
-    // Copy the count and error then disable.
-    uint16_t count = _bufferCount;
-    uint16_t error = _error;
-
-    disable();
-
-    // Detect a receiver error.
-    if (error > 0) {
-        return (-1) * (error + 100);
-    }
-
-    // Detect a buffer overflow.
-    if (count > bufferSize) {
-        return ERROR_RX_OVERFLOW;
-    }
-
-    return count;
+inline void slipWrite(uint32_t value)
+{
+    slipWrite((uint8_t) (value & 0xff));
+    slipWrite((uint8_t) ((value >> 8) & 0xff));
+    slipWrite((uint8_t) ((value >> 16) & 0xff));
+    slipWrite((uint8_t) ((value >> 24) & 0xff));
 }
 
 void NewCoaxReceiver::activeInterrupt()
@@ -214,7 +138,10 @@ void NewCoaxReceiver::activeInterrupt()
         read();
     }
 
-    _bufferCount = 0;
+    Serial.write(FRAME_END);
+
+    slipWrite(millis());
+
     _state = Receiving;
 }
 
@@ -226,27 +153,27 @@ void NewCoaxReceiver::dataAvailableInterrupt()
 
     uint16_t word = read();
 
-    if (_bufferCount < _bufferSize) {
-        _buffer[_bufferCount++] = word;
-    } else {
-        _bufferCount = _bufferSize + 1;
-    }
+    slipWrite(word);
 
     // TODO: this is wrong... but it allows things to settle!
     delayMicroseconds(1);
 
     if (!digitalRead(RX_ACTIVE_PIN) && !digitalRead(RX_DATA_AVAILABLE_PIN)) {
-        _state = Received;
+        Serial.write(FRAME_END);
+
+        _state = Idle;
     }
 }
 
 void NewCoaxReceiver::errorInterrupt()
 {
-    _error = _dataBus.read();
-
-    if (_state == Receiving) {
-        _state = Received;
+    if (_state != Receiving) {
+        return;
     }
+
+    uint16_t error = 0x8000 | _dataBus.read();
+
+    slipWrite(error);
 
     reset();
 }
