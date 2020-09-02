@@ -174,7 +174,7 @@ U 1 1 5E634054
 P 15100 2750
 F 0 "TP2" H 15100 3000 50  0000 C CNN
 F 1 "TestPoint" V 14900 2850 50  0001 L CNN
-F 2 "TestPoint:TestPoint_THTPad_D1.5mm_Drill0.7mm" H 15300 2750 50  0001 C CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 15300 2750 50  0001 C CNN
 F 3 "~" H 15300 2750 50  0001 C CNN
 	1    15100 2750
 	-1   0    0    1   
@@ -188,7 +188,7 @@ U 1 1 5E6333D6
 P 15100 2350
 F 0 "TP1" H 15100 2600 50  0000 C CNN
 F 1 "TestPoint" V 15300 2450 50  0001 L CNN
-F 2 "TestPoint:TestPoint_THTPad_D1.5mm_Drill0.7mm" H 15300 2350 50  0001 C CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 15300 2350 50  0001 C CNN
 F 3 "~" H 15300 2350 50  0001 C CNN
 	1    15100 2350
 	1    0    0    -1  
@@ -941,36 +941,25 @@ Wire Wire Line
 Wire Wire Line
 	8850 1400 8850 1800
 $Comp
-L power:+5V #PWR0102
-U 1 1 5F537194
-P 5400 1100
-F 0 "#PWR0102" H 5400 950 50  0001 C CNN
-F 1 "+5V" H 5415 1273 50  0000 C CNN
-F 2 "" H 5400 1100 50  0001 C CNN
-F 3 "" H 5400 1100 50  0001 C CNN
-	1    5400 1100
-	1    0    0    -1  
-$EndComp
-$Comp
 L power:+3V3 #PWR0103
 U 1 1 5F538196
-P 7450 1100
-F 0 "#PWR0103" H 7450 950 50  0001 C CNN
-F 1 "+3V3" H 7465 1273 50  0000 C CNN
-F 2 "" H 7450 1100 50  0001 C CNN
-F 3 "" H 7450 1100 50  0001 C CNN
-	1    7450 1100
+P 7450 900
+F 0 "#PWR0103" H 7450 750 50  0001 C CNN
+F 1 "+3V3" H 7465 1073 50  0000 C CNN
+F 2 "" H 7450 900 50  0001 C CNN
+F 3 "" H 7450 900 50  0001 C CNN
+	1    7450 900 
 	1    0    0    -1  
 $EndComp
 $Comp
 L power:+1V2 #PWR0104
 U 1 1 5F538900
-P 8850 1100
-F 0 "#PWR0104" H 8850 950 50  0001 C CNN
-F 1 "+1V2" H 8865 1273 50  0000 C CNN
-F 2 "" H 8850 1100 50  0001 C CNN
-F 3 "" H 8850 1100 50  0001 C CNN
-	1    8850 1100
+P 8850 900
+F 0 "#PWR0104" H 8850 750 50  0001 C CNN
+F 1 "+1V2" H 8865 1073 50  0000 C CNN
+F 2 "" H 8850 900 50  0001 C CNN
+F 3 "" H 8850 900 50  0001 C CNN
+	1    8850 900 
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -993,17 +982,6 @@ Text GLabel 1400 1300 2    50   Input ~ 0
 USB_CONN_D+
 Text GLabel 1400 1400 2    50   Input ~ 0
 USB_CONN_D-
-$Comp
-L power:+5V #PWR0101
-U 1 1 5F57F6FF
-P 1500 1000
-F 0 "#PWR0101" H 1500 850 50  0001 C CNN
-F 1 "+5V" H 1515 1173 50  0000 C CNN
-F 2 "" H 1500 1000 50  0001 C CNN
-F 3 "" H 1500 1000 50  0001 C CNN
-	1    1500 1000
-	1    0    0    -1  
-$EndComp
 Wire Wire Line
 	1400 1100 1500 1100
 $Comp
@@ -1025,17 +1003,6 @@ Text GLabel 3600 1450 2    50   Input ~ 0
 USB_D-
 Text GLabel 3600 1250 2    50   Input ~ 0
 USB_CONN_D-
-$Comp
-L power:+5V #PWR0107
-U 1 1 5F5A6EFC
-P 3200 850
-F 0 "#PWR0107" H 3200 700 50  0001 C CNN
-F 1 "+5V" H 3215 1023 50  0000 C CNN
-F 2 "" H 3200 850 50  0001 C CNN
-F 3 "" H 3200 850 50  0001 C CNN
-	1    3200 850 
-	1    0    0    -1  
-$EndComp
 Wire Wire Line
 	3200 850  3200 950 
 $Comp
@@ -1053,7 +1020,6 @@ Wire Wire Line
 	3200 1850 3200 1750
 Wire Wire Line
 	7450 1400 7850 1400
-Connection ~ 8850 1400
 Wire Wire Line
 	6300 1400 6450 1400
 Connection ~ 6450 1400
@@ -1808,10 +1774,6 @@ Connection ~ 5900 4850
 Wire Wire Line
 	5900 4850 5900 4900
 Wire Wire Line
-	8850 1100 8850 1400
-Wire Wire Line
-	7450 1100 7450 1400
-Wire Wire Line
 	1100 1700 1100 1800
 Wire Wire Line
 	1500 1000 1500 1100
@@ -2092,7 +2054,7 @@ Wire Wire Line
 Connection ~ 5900 9050
 Wire Wire Line
 	5900 9050 6150 9050
-Text GLabel 4200 5850 2    50   Output ~ 0
+Text GLabel 4200 5950 2    50   Output ~ 0
 STM32_BOOT0
 $Comp
 L power:+3V3 #PWR0129
@@ -2150,9 +2112,7 @@ Wire Wire Line
 Wire Wire Line
 	4550 3900 4350 3900
 Wire Wire Line
-	4100 5750 4100 5850
-Wire Wire Line
-	4100 5850 4200 5850
+	4100 5950 4200 5950
 Wire Wire Line
 	4100 5350 4100 5450
 $Comp
@@ -2262,4 +2222,98 @@ Wire Wire Line
 Connection ~ 6150 9450
 Text Notes 11200 6000 0    50   Italic 10
 is this the correct decoupling - check data sheet
+$Comp
+L power:+5V #PWR0107
+U 1 1 5F5A6EFC
+P 3200 850
+F 0 "#PWR0107" H 3200 700 50  0001 C CNN
+F 1 "+5V" H 3215 1023 50  0000 C CNN
+F 2 "" H 3200 850 50  0001 C CNN
+F 3 "" H 3200 850 50  0001 C CNN
+	1    3200 850 
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+5V #PWR0101
+U 1 1 5F57F6FF
+P 1500 1000
+F 0 "#PWR0101" H 1500 850 50  0001 C CNN
+F 1 "+5V" H 1515 1173 50  0000 C CNN
+F 2 "" H 1500 1000 50  0001 C CNN
+F 3 "" H 1500 1000 50  0001 C CNN
+	1    1500 1000
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint TP4
+U 1 1 5F50A8D1
+P 5400 1100
+F 0 "TP4" V 5503 1172 50  0000 C CNN
+F 1 "TestPoint" V 5504 1172 50  0001 C CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 5600 1100 50  0001 C CNN
+F 3 "~" H 5600 1100 50  0001 C CNN
+	1    5400 1100
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:+5V #PWR0102
+U 1 1 5F537194
+P 5400 900
+F 0 "#PWR0102" H 5400 750 50  0001 C CNN
+F 1 "+5V" H 5415 1073 50  0000 C CNN
+F 2 "" H 5400 900 50  0001 C CNN
+F 3 "" H 5400 900 50  0001 C CNN
+	1    5400 900 
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5400 900  5400 1100
+Connection ~ 5400 1100
+Connection ~ 8850 1400
+$Comp
+L Connector:TestPoint TP5
+U 1 1 5F62F9AC
+P 7450 1100
+F 0 "TP5" V 7553 1172 50  0000 C CNN
+F 1 "TestPoint" V 7554 1172 50  0001 C CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 7650 1100 50  0001 C CNN
+F 3 "~" H 7650 1100 50  0001 C CNN
+	1    7450 1100
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	7450 1100 7450 1400
+$Comp
+L Connector:TestPoint TP6
+U 1 1 5F6306B1
+P 8850 1100
+F 0 "TP6" V 8953 1172 50  0000 C CNN
+F 1 "TestPoint" V 8954 1172 50  0001 C CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 9050 1100 50  0001 C CNN
+F 3 "~" H 9050 1100 50  0001 C CNN
+	1    8850 1100
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	8850 1100 8850 1400
+Wire Wire Line
+	7450 900  7450 1100
+Connection ~ 7450 1100
+Wire Wire Line
+	8850 900  8850 1100
+Connection ~ 8850 1100
+$Comp
+L Connector:TestPoint TP3
+U 1 1 5F67A563
+P 4100 5950
+F 0 "TP3" V 4203 6022 50  0000 C CNN
+F 1 "TestPoint" V 4204 6022 50  0001 C CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 4300 5950 50  0001 C CNN
+F 3 "~" H 4300 5950 50  0001 C CNN
+	1    4100 5950
+	0    -1   -1   0   
+$EndComp
+Connection ~ 4100 5950
+Wire Wire Line
+	4100 5750 4100 5950
 $EndSCHEMATC
