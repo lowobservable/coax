@@ -4,6 +4,7 @@ coax.serial_interface
 """
 
 import struct
+from copy import copy
 from sliplib import SlipWrapper, ProtocolError
 
 from .interface import Interface
@@ -164,7 +165,7 @@ def _convert_error(message):
         return InterfaceError(f'Invalid error response: {message}')
 
     if message[1] in ERROR_MAP:
-        error = ERROR_MAP[message[1]]
+        error = copy(ERROR_MAP[message[1]])
 
         # Append description if included.
         if len(message) > 2:
