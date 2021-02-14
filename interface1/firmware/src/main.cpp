@@ -79,8 +79,6 @@ void sendErrorMessage(uint8_t code, const char *description)
 }
 
 #define COMMAND_RESET 0x01
-#define COMMAND_TRANSMIT 0x02
-#define COMMAND_RECEIVE 0x04
 #define COMMAND_TRANSMIT_RECEIVE 0x06
 
 void handleResetCommand(uint8_t *buffer, int bufferCount)

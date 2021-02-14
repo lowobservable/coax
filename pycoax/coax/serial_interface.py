@@ -45,35 +45,6 @@ class SerialInterface(Interface):
 
         return '{}.{}.{}'.format(major, minor, patch)
 
-    def transmit(self, words, repeat_count=None, repeat_offset=1):
-        message = bytes([0x02])
-
-        message += _pack_transmit_header(repeat_count, repeat_offset)
-        message += _pack_transmit_data(words)
-
-        self._write_message(message)
-
-        message = self._read_message()
-
-        if message[0] != 0x01:
-            raise _convert_error(message)
-
-    def receive(self, length=None, timeout=None):
-        timeout_milliseconds = self._calculate_timeout_milliseconds(timeout)
-
-        message = bytes([0x04])
-
-        message += _pack_receive_header(length, timeout_milliseconds)
-
-        self._write_message(message)
-
-        message = self._read_message()
-
-        if message[0] != 0x01:
-            raise _convert_error(message)
-
-        return _unpack_receive_data(message[1:])
-
     def transmit_receive(self, transmit_words, transmit_repeat_count=None,
                          transmit_repeat_offset=1, receive_length=None,
                          receive_timeout=None):
