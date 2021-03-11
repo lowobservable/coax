@@ -27,9 +27,7 @@ with Serial('/dev/ttyACM0', 115200) as serial:
     # Initialize and reset the interface.
     interface = SerialInterface(serial)
 
-    firmware_version = interface.reset()
-
-    print(f'Firmware version is {firmware_version}')
+    interface.reset()
 
     # Wait for a terminal to attach...
     poll_response = None
