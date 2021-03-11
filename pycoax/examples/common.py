@@ -28,9 +28,10 @@ def create_interface(serial, reset=True, poll_flush=True):
     if reset:
         print('Resetting interface...')
 
-        version = interface.reset()
+        interface.reset()
 
-        print(f'Firmware version is {version}')
+        if interface.legacy_firmware_detected:
+            print(f'Firmware version is {interface.legacy_firmware_version}')
 
     if poll_flush:
         print('POLLing...')

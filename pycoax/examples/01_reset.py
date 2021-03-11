@@ -7,6 +7,7 @@ with create_serial() as serial:
 
     print('Resetting interface...')
 
-    version = interface.reset()
+    interface.reset()
 
-    print(f'Firmware version is {version}')
+    if interface.legacy_firmware_detected:
+        print(f'Firmware version is {interface.legacy_firmware_version}')

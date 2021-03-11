@@ -19,6 +19,9 @@ class SerialInterface(Interface):
 
         self.slip_serial = SlipSerial(self.serial)
 
+        self.legacy_firmware_detected = None
+        self.legacy_firmware_version = None
+
     def reset(self):
         original_serial_timeout = self.serial.timeout
 
@@ -38,12 +41,16 @@ class SerialInterface(Interface):
         if message[0] != 0x01:
             raise _convert_error(message)
 
-        if len(message) != 4:
+        if message[1:] == b'\x32\x70':
+            self.legacy_firmware_detected = False
+            self.legacy_firmware_version = None
+        elif len(message) == 4:
+            (major, minor, patch) = struct.unpack('BBB', message[1:])
+
+            self.legacy_firmware_detected = True
+            self.legacy_firmware_version = '{}.{}.{}'.format(major, minor, patch)
+        else:
             raise InterfaceError(f'Invalid reset response: {message}')
-
-        (major, minor, patch) = struct.unpack('BBB', message[1:])
-
-        return '{}.{}.{}'.format(major, minor, patch)
 
     def transmit_receive(self, transmit_words, transmit_repeat_count=None,
                          transmit_repeat_offset=1, receive_length=None,

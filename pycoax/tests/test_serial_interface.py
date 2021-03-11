@@ -15,7 +15,7 @@ class SerialInterfaceResetTestCase(unittest.TestCase):
         self.interface = SerialInterface(self.serial)
 
         self.interface._write_message = Mock()
-        self.interface._read_message = Mock(return_value=bytes.fromhex('01 01 02 03'))
+        self.interface._read_message = Mock(return_value=bytes.fromhex('01 32 70'))
 
     def test_message_is_sent(self):
         # Act
@@ -24,8 +24,24 @@ class SerialInterfaceResetTestCase(unittest.TestCase):
         # Assert
         self.interface._write_message.assert_called_with(bytes.fromhex('01'))
 
-    def test_version_is_formatted_correctly(self):
-        self.assertEqual(self.interface.reset(), '1.2.3')
+    def test_non_legacy_response_is_handled_correctly(self):
+        # Act
+        self.interface.reset()
+
+        # Assert
+        self.assertFalse(self.interface.legacy_firmware_detected)
+        self.assertIsNone(self.interface.legacy_firmware_version)
+
+    def test_legacy_response_is_handled_correctly(self):
+        # Arrange
+        self.interface._read_message = Mock(return_value=bytes.fromhex('01 01 02 03'))
+
+        # Act
+        self.interface.reset()
+
+        # Assert
+        self.assertTrue(self.interface.legacy_firmware_detected)
+        self.assertEqual(self.interface.legacy_firmware_version, '1.2.3')
 
     def test_timeout_is_restored_after_reset(self):
         # Arrange
