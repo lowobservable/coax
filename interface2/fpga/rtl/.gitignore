@@ -1,0 +1,10 @@
+*.json
+*.asc
+*.bin
+
+# iCEcube2
+.mac_address
+coax_Implmnt
+synlog.tcl
+*.log
+*.log.bak

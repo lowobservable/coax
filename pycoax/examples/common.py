@@ -19,9 +19,10 @@ def create_serial():
     return serial
 
 def create_interface(serial, reset=True, poll_flush=True):
-    print('Sleeping to allow interface time to wake up...')
+    if 'COAX_FAST_START' not in os.environ:
+        print('Sleeping to allow interface time to wake up...')
 
-    time.sleep(3)
+        time.sleep(3)
 
     interface = SerialInterface(serial)
 

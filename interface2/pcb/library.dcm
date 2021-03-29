@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP Murata_78602
+D Murata 78602 General Purpose Pulse Transformer
+K murata
+F https://www.murata-ps.com/datasheet?/data/magnetics/kmp_786j.pdf
+$ENDCMP
+#
+#End Doc Library

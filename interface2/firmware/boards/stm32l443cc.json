@@ -1,0 +1,38 @@
+{
+  "build": {
+    "cpu": "cortex-m4",
+    "extra_flags": "-DSTM32L443xx",
+    "f_cpu": "80000000L",
+    "mcu": "stm32l443ccu6",
+    "product_line": "stm32l443xx",
+    "variant": "STM32L443CC"
+  },
+  "connectivity": [
+  ],
+  "debug": {
+    "default_tools": [
+      "stlink"
+    ],
+    "jlink_device": "STM32L443CC",
+    "onboard_tools": [
+      "stlink"
+    ],
+    "openocd_board": "xxx",
+    "svd_path": "STM32L4x3.svd"
+  },
+  "frameworks": [
+    "stm32cube"
+  ],
+  "name": "STM32L443CC",
+  "upload": {
+    "maximum_ram_size": 65536,
+    "maximum_size": 262144,
+    "protocol": "stlink",
+    "protocols": [
+      "dfu",
+      "stlink"
+    ]
+  },
+  "url": "https://www.st.com/en/microcontrollers-microprocessors/stm32l443cc.html",
+  "vendor": "ST"
+}

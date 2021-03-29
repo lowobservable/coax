@@ -1,11 +1,18 @@
 # coax
 
-Tools for interfacing with [IBM 3270](https://en.wikipedia.org/wiki/IBM_3270) type terminals.
+Tools for connecting to real [IBM 3270](https://en.wikipedia.org/wiki/IBM_3270) type terminals.
 
-## Contents
+## Documentation
 
 * [protocol](protocol/protocol.md) - Protocol documentation
-* [interface1](interface1) - A serial attached Arduino interface using the National Semiconductor DP8340 and DP8341
+
+## Hardware
+
+* [interface1](interface1) - Legacy interface using obsolete National Semiconductor DP8340 and DP8341
+* [interface2](interface2) - Modern interface using a Lattice iCE40 FPGA and STM32 microcontroller
+
+## Software
+
 * [pycoax](pycoax) - Python interface library
 
 ## See Also
