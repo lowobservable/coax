@@ -41,7 +41,7 @@ class Command(Enum):
 
     # EAB Feature
     EAB_READ_DATA = 0x03
-    EAB_LOAD_MASK = 0x05
+    EAB_LOAD_MASK = 0x06
     EAB_WRITE_ALTERNATE = 0x0a
     EAB_READ_MULTIPLE = 0x0b
     EAB_WRITE_UNDER_MASK = 0x0c

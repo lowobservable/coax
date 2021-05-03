@@ -259,7 +259,7 @@ Registers can be read-only, write-only, or read-write.
 | Base | `DIAGNOSTIC_RESET` | `0` | `0` | `0` | `1` | `1` | `1` | `0` | `0` | `0` | `1` |
 | All  | `READ_FEATURE_ID` | _F_ | _F_ | _F_ | _F_ | `0` | `1` | `1` | `1` | `0` | `1` |
 | EAB | `READ_DATA` | _F_ | _F_ | _F_ | _F_ | `0` | `0` | `1` | `1` | `0` | `1` |
-| EAB | `LOAD_MASK` | _F_ | _F_ | _F_ | _F_ | `0` | `1` | `0` | `1` | `0` | `1` |
+| EAB | `LOAD_MASK` | _F_ | _F_ | _F_ | _F_ | `0` | `1` | `1` | `0` | `0` | `1` |
 | EAB | `WRITE_ALTERNATE` | _F_ | _F_ | _F_ | _F_ | `1` | `0` | `1` | `0` | `0` | `1` |
 | EAB | `READ_MULTIPLE` | _F_ | _F_ | _F_ | _F_ | `1` | `0` | `1` | `1` | `0` | `1` |
 | EAB | `WRITE_UNDER_MASK` | _F_ | _F_ | _F_ | _F_ | `1` | `1` | `0` | `0` | `0` | `1` |
