@@ -198,13 +198,37 @@ class ExecuteWriteCommandTestCase(unittest.TestCase):
         self.interface = Mock()
 
     def test(self):
+        for jumbo_write_strategy in [None, 'split']:
+            with self.subTest(jumbo_write_strategy=jumbo_write_strategy):
+                # Arrange
+                command_word = pack_command_word(Command.WRITE_DATA)
+
+                self.interface.transmit_receive = Mock(return_value=[0b0000000000])
+
+                # Act
+                _execute_write_command(self.interface, command_word, bytes.fromhex('de ad be ef'), jumbo_write_strategy=jumbo_write_strategy)
+
+                # Assert
+                self.interface.transmit_receive.assert_called_once_with([0x0031, 0x037a, 0x02b4, 0x02fa, 0x03bc], None, receive_length=1)
+
+    def test_jumbo_write_split_strategy(self):
         # Arrange
         command_word = pack_command_word(Command.WRITE_DATA)
 
         self.interface.transmit_receive = Mock(return_value=[0b0000000000])
 
-        # Act and assert
-        _execute_write_command(self.interface, command_word, bytes.fromhex('de ad be ef'))
+        data = (bytes.fromhex('01') * 1023) + (bytes.fromhex('02') * 32)
+
+        # Act
+        _execute_write_command(self.interface, command_word, data, jumbo_write_strategy='split')
+
+        # Assert
+        self.assertEqual(self.interface.transmit_receive.call_count, 2)
+
+        call_args_list = self.interface.transmit_receive.call_args_list
+
+        self.assertEqual(len(call_args_list[0][0][0]), 1024)
+        self.assertEqual(len(call_args_list[1][0][0]), 32)
 
     def test_unexpected_response_length(self):
         # Arrange

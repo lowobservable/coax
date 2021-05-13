@@ -4,6 +4,7 @@ coax.protocol
 """
 
 from enum import Enum
+from more_itertools import chunked
 
 from .exceptions import ProtocolError
 from .parity import odd_parity
@@ -438,20 +439,42 @@ def _execute_read_command(interface, command_word, response_length=1,
 
     return unpack_data_words(response) if unpack else response
 
-def _execute_write_command(interface, command_word, data=None, **kwargs):
+def _execute_write_command(interface, command_word, data=None,
+        jumbo_write_strategy=None, **kwargs):
     """Execute a standard write command."""
-    data_words = []
-    transmit_repeat_count = None
+    length = 1
 
     if isinstance(data, tuple):
-        data_words = pack_data_words(data[0])
-        transmit_repeat_count = data[1]
+        length += len(data[0]) * data[1]
     elif data is not None:
-        data_words = pack_data_words(data)
+        length += len(data)
 
-    response = interface.transmit_receive([command_word, *data_words],
-                                          transmit_repeat_count,
-                                          receive_length=1, **kwargs)
+    max_length = 1024
+
+    if jumbo_write_strategy == 'split' and length > max_length:
+        if isinstance(data, tuple):
+            data_words = pack_data_words(data[0]) * data[1]
+        else:
+            data_words = pack_data_words(data)
+
+        for words in chunked([command_word, *data_words], max_length):
+            _execute_write(interface, words, None, **kwargs)
+    else:
+        data_words = []
+        transmit_repeat_count = None
+
+        if isinstance(data, tuple):
+            data_words = pack_data_words(data[0])
+            transmit_repeat_count = data[1]
+        elif data is not None:
+            data_words = pack_data_words(data)
+
+        _execute_write(interface, [command_word, *data_words],
+                       transmit_repeat_count, **kwargs)
+
+def _execute_write(interface, words, transmit_repeat_count, **kwargs):
+    response = interface.transmit_receive(words, transmit_repeat_count,
+            receive_length=1, **kwargs)
 
     if len(response) != 1:
         raise ProtocolError(f'Expected 1 word response: {response}')
