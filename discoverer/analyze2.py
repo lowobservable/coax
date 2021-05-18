@@ -4,7 +4,7 @@ import sys
 from enum import Enum
 import csv
 
-from coax.protocol import Command, is_data_word, unpack_data_words
+from coax.protocol import Command, is_data_word, unpack_data_word
 
 from display import CHAR_MAP
 
@@ -130,9 +130,9 @@ def main():
 
             # Is it a command word?
             if is_command_word(word):
-                print(format_command(unpack_command_word(word)))
+                print('C: ' + format_command(unpack_command_word(word)))
             else:
-                print('.')
+                print('D: ' + '{0:02x}'.format(unpack_data_word(word)))
 
 if __name__ == '__main__':
     main()
