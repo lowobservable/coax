@@ -58,7 +58,7 @@ def main():
                     print('?? ' + format_data(data, command))
             else:
                 # Strange mix of commands and data...
-                pass
+                print('!! ' + str(words))
 
 if __name__ == '__main__':
     main()
