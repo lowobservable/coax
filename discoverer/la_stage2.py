@@ -30,7 +30,12 @@ def format_command(command):
 def format_data(data, command):
     return ' '.join(['{0:02x}'.format(byte) for byte in data])
 
+class Party(Enum):
+    CONTROLLER = 1
+    DEVICE = 2
+
 def main():
+    sending_party = None
     command = None
     data = None
 
@@ -41,12 +46,19 @@ def main():
             words = [int(word) for word in line[1:-1].split(',')]
 
             if is_command_word(words[0]) and all(is_data_word(word) for word in words[1:]):
+                sending_party = Party.CONTROLLER
                 command = unpack_command_word(words[0])
                 data = unpack_data_words(words[1:])
 
                 if command != Command.POLL.value:
                     print('-> ' + format_command(command) + ' ' + format_data(data, command))
             elif all(is_data_word(word) for word in words):
+                # Flip the party...
+                if sending_party == Party.CONTROLLER:
+                    sending_party = Party.DEVICE
+                else:
+                    sending_party = Party.CONTROLLER
+
                 data = unpack_data_words(words)
 
                 if not (command == Command.POLL.value and len(words) == 1 and words[0] == 0):
@@ -55,7 +67,10 @@ def main():
                         print('-> ' + format_command(command))
 
 
-                    print('?? ' + format_data(data, command))
+                    if sending_party == Party.DEVICE and words[0] == 0:
+                        print('<- TRTA')
+                    else:
+                        print(('->' if sending_party == Party.CONTROLLER else '<-') + ' ' + format_data(data, command))
             else:
                 # Strange mix of commands and data...
                 print('!! ' + str(words))
