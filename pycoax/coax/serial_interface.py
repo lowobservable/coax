@@ -76,6 +76,16 @@ class SerialInterface(Interface):
 
         return _unpack_receive_data(message[1:])
 
+    def enter_dfu_mode(self):
+        message = bytes([0xf2])
+
+        self._write_message(message)
+
+        message = self._read_message()
+
+        if message[0] != 0x01:
+            raise _convert_error(message)
+
     def _calculate_timeout_milliseconds(self, timeout):
         milliseconds = 0
 
