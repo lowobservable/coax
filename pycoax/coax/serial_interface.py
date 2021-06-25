@@ -3,8 +3,12 @@ coax.serial_interface
 ~~~~~~~~~~~~~~~~~~~~~
 """
 
+import time
+import os
 import struct
 from copy import copy
+from contextlib import contextmanager
+from serial import Serial
 from sliplib import SlipWrapper, ProtocolError
 
 from .interface import Interface
@@ -105,6 +109,24 @@ class SerialInterface(Interface):
     def _write_message(self, message):
         self.slip_serial.send_msg(struct.pack('>H', len(message)) + message +
                                   struct.pack('>H', 0))
+
+@contextmanager
+def open_serial_interface(serial_port, reset=True):
+    with Serial(serial_port, 115200) as serial:
+        serial.reset_input_buffer()
+        serial.reset_output_buffer()
+
+        # Allow the interface firmware time to start, this is only required for the
+        # original Arduino Mega based interface.
+        if 'COAX_FAST_START' not in os.environ:
+            time.sleep(3)
+
+        interface = SerialInterface(serial)
+
+        if reset:
+            interface.reset()
+
+        yield interface
 
 def _pack_transmit_header(repeat_count, repeat_offset):
     repeat = ((repeat_offset << 15) | repeat_count) if repeat_count else 0

@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 
-from common import create_serial, create_interface
+from common import open_example_serial_interface
 
 from coax import read_address_counter_hi, read_address_counter_lo, load_address_counter_hi, load_address_counter_lo, write_data
 
-with create_serial() as serial:
-    interface = create_interface(serial)
-
+with open_example_serial_interface() as interface:
     print('LOAD_ADDRESS_COUNTER_HI...')
 
     load_address_counter_hi(interface, 0)

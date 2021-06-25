@@ -1,6 +1,6 @@
 from .__about__ import __version__
 
-from .serial_interface import SerialInterface
+from .serial_interface import SerialInterface, open_serial_interface
 
 from .protocol import (
     PollAction,

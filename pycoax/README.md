@@ -16,19 +16,10 @@ Assuming your interface is connected to `/dev/ttyACM0` and you have a CUT type t
 
 ```
 import time
-from serial import Serial
-from coax import SerialInterface, poll, poll_ack, load_address_counter_hi, \
+from coax import open_serial_interface, poll, poll_ack, load_address_counter_hi, \
                  load_address_counter_lo, write_data, ReceiveTimeout
 
-with Serial('/dev/ttyACM0', 115200) as serial:
-    # Give the interface time to wake up...
-    time.sleep(3)
-
-    # Initialize and reset the interface.
-    interface = SerialInterface(serial)
-
-    interface.reset()
-
+with open_serial_interface('/dev/ttyACM0') as interface:
     # Wait for a terminal to attach...
     poll_response = None
     attached = False

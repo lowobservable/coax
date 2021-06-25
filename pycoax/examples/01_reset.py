@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
-from common import create_serial, create_interface
+from common import open_example_serial_interface
 
-with create_serial() as serial:
-    interface = create_interface(serial, reset=False, poll_flush=False)
-
+with open_example_serial_interface(reset=False, poll_flush=False) as interface:
     print('Resetting interface...')
 
     interface.reset()

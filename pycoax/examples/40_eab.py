@@ -3,16 +3,14 @@
 import sys
 from itertools import chain
 
-from common import create_serial, create_interface
+from common import open_example_serial_interface
 
 from coax import Feature, get_features, load_address_counter_hi, load_address_counter_lo, write_data, eab_write_alternate, eab_load_mask
 
 def eab_alternate_zip(regen_buffer, eab_buffer):
     return bytes(chain(*zip(regen_buffer, eab_buffer)))
 
-with create_serial() as serial:
-    interface = create_interface(serial)
-
+with open_example_serial_interface() as interface:
     features = get_features(interface)
 
     if Feature.EAB not in features:

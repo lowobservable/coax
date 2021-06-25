@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 
-from common import create_serial, create_interface
+from common import open_example_serial_interface
 
 from coax import Control, read_address_counter_hi, read_address_counter_lo, load_address_counter_hi, load_address_counter_lo, write_data, load_control_register
 
 DIGIT_MAP = [0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x80, 0x81, 0x82, 0x83, 0x84, 0x85]
 
-with create_serial() as serial:
-    interface = create_interface(serial)
-
+with open_example_serial_interface() as interface:
     load_control_register(interface, Control(cursor_inhibit=True))
 
     load_address_counter_hi(interface, 0)
