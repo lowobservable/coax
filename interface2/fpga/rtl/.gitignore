@@ -1,6 +1,7 @@
 *.json
 *.asc
 *.bin
+*_report.txt
 
 # iCEcube2
 .mac_address
