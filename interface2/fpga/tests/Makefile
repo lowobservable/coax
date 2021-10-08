@@ -16,7 +16,7 @@ coax_tx_tb: coax_tx_tb.v $(RTL)/coax_tx.v $(RTL)/coax_tx_bit_timer.v
 control_tb: control_tb.v $(RTL)/control.v $(RTL)/coax_buffered_tx.v $(RTL)/coax_tx.v $(RTL)/coax_tx_bit_timer.v $(RTL)/coax_buffer.v $(RTL)/third_party/*.v
 
 test: $(TESTS)
-	$(foreach tb,$(TESTS),./run_test.sh $(tb);)
+	./run_tests.sh
 
 clean:
 	rm -f *_tb *.vcd

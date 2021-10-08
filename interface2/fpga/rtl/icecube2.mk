@@ -1,5 +1,5 @@
 # See https://github.com/halfmanhalftaco/fpga-docker/tree/master/Lattice_iCEcube2
-ICECUBE2_WRAPPER = docker run -t --rm --volume $(RTL):/data --workdir /data --mac-address=$(shell cat .mac_address) icecube2:latest ./icecube2_env.sh
+ICECUBE2_WRAPPER = docker run -t --rm --volume $(RTL):/data --workdir /data --mac-address=$(or $(ICECUBE2_MAC_ADDRESS),$(shell cat .mac_address)) $(or $(ICECUBE2_IMAGE),icecube2:latest) ./icecube2_env.sh
 
 RTL = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 IMPLMNT = coax_Implmnt

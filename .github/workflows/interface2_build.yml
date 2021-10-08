@@ -12,7 +12,23 @@ permissions:
   contents: read
 
 jobs:
+  test_fpga:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: interface2/fpga
+    name: Test FPGA
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Icarus Verilog
+        run: |
+          sudo apt-get update
+          sudo apt-get install iverilog
+      - name: Run tests
+        run: make tests
+
   build_fpga:
+    needs: test_fpga
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -49,21 +65,21 @@ jobs:
           fi
       - name: Login to AWS ECR
         if: env.BITSTREAM_CACHE_EXISTS == 'false'
-        run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $REGISTRY
-        env:
-          REGISTRY: ${{ secrets.AWS_ECR }}
+        id: aws_ecr_login
+        uses: aws-actions/amazon-ecr-login@v1
       - name: Prepare iCEcube2
         if: env.BITSTREAM_CACHE_EXISTS == 'false'
         run: |
-          docker pull $REGISTRY/icecube2:latest
-          docker tag $REGISTRY/icecube2:latest icecube2:latest
-          echo $ICECUBE2_MAC_ADDRESS > rtl/.mac_address
+          ICECUBE2_IMAGE=$REGISTRY/icecube2:latest
+          echo "ICECUBE2_IMAGE=$ICECUBE2_IMAGE" >> $GITHUB_ENV
+          docker pull $ICECUBE2_IMAGE
         env:
-          REGISTRY: ${{ secrets.AWS_ECR }}
-          ICECUBE2_MAC_ADDRESS: ${{ secrets.ICECUBE2_MAC_ADDRESS }}
+          REGISTRY: ${{ steps.aws_ecr_login.outputs.registry }}
       - name: Build bitstream
         if: env.BITSTREAM_CACHE_EXISTS == 'false'
         run: make rtl
+        env:
+          ICECUBE2_MAC_ADDRESS: ${{ secrets.ICECUBE2_MAC_ADDRESS }}
       - name: Cache bitstream
         if: env.BITSTREAM_CACHE_EXISTS == 'false'
         run: |
@@ -81,7 +97,7 @@ jobs:
       - name: Attach bitstream
         uses: actions/upload-artifact@v2
         with:
-          name: bitstream
+          name: fpga_bitstream
           path: |
             interface2/fpga/rtl/top.bin
             interface2/fpga/rtl/top_timing_report.txt
@@ -99,14 +115,14 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.8
-      - name: Install dependencies
+      - name: Install PlatformIO
         run: |
           python -m pip install --upgrade pip
           pip install platformio
       - name: Download bitstream
         uses: actions/download-artifact@v2
         with:
-          name: bitstream
+          name: fpga_bitstream
           path: interface2/fpga/rtl
       - name: Build firmware
         run: pio run

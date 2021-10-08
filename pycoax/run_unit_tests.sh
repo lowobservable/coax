@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Display verbose output in CI environment.
 if [ -n "$CI" ]; then
