@@ -2,11 +2,11 @@
 
 from common import open_example_serial_interface
 
-from coax import read_status
+from coax import ReadStatus
 
 with open_example_serial_interface() as interface:
     print('READ_STATUS...')
 
-    status = read_status(interface)
+    status = interface.execute(ReadStatus())
 
     print(status)

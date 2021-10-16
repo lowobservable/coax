@@ -2,9 +2,9 @@
 
 from common import open_example_serial_interface
 
-from coax import reset
+from coax import Reset
 
 with open_example_serial_interface() as interface:
     print('RESET...')
 
-    reset(interface)
+    interface.execute(Reset())

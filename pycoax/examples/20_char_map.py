@@ -2,15 +2,14 @@
 
 from common import open_example_serial_interface
 
-from coax import Control, read_address_counter_hi, read_address_counter_lo, load_address_counter_hi, load_address_counter_lo, write_data, load_control_register
+from coax import Control, LoadAddressCounterHi, LoadAddressCounterLo, WriteData, LoadControlRegister
 
 DIGIT_MAP = [0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x80, 0x81, 0x82, 0x83, 0x84, 0x85]
 
 with open_example_serial_interface() as interface:
-    load_control_register(interface, Control(cursor_inhibit=True))
+    interface.execute(LoadControlRegister(Control(cursor_inhibit=True)))
 
-    load_address_counter_hi(interface, 0)
-    load_address_counter_lo(interface, 80)
+    interface.execute([LoadAddressCounterHi(0), LoadAddressCounterLo(80)])
 
     buffer = b'\x00' * 4
 
@@ -34,11 +33,10 @@ with open_example_serial_interface() as interface:
 
     buffer += b'\x00' * 560
 
-    write_data(interface, buffer)
+    interface.execute(WriteData(buffer))
 
     # Status Line
-    load_address_counter_hi(interface, 7)
-    load_address_counter_lo(interface, 48)
+    interface.execute([LoadAddressCounterHi(7), LoadAddressCounterLo(48)])
 
     buffer = b''
 
@@ -51,11 +49,10 @@ with open_example_serial_interface() as interface:
         for lo in range(0, 16):
             buffer += bytes([DIGIT_MAP[lo]])
 
-    write_data(interface, buffer)
+    interface.execute(WriteData(buffer))
 
-    load_address_counter_hi(interface, 0)
-    load_address_counter_lo(interface, 0)
+    interface.execute([LoadAddressCounterHi(0), LoadAddressCounterLo(0)])
 
     buffer = bytes(range(0xc0, 0xff + 1))
 
-    write_data(interface, buffer)
+    interface.execute(WriteData(buffer))

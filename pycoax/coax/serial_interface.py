@@ -11,10 +11,13 @@ from contextlib import contextmanager
 from serial import Serial
 from sliplib import SlipWrapper, ProtocolError
 
-from .interface import Interface
+from .interface import Interface, FrameFormat
+from .protocol import pack_data_word
 from .exceptions import InterfaceError, InterfaceTimeout, ReceiveError, ReceiveTimeout
 
 class SerialInterface(Interface):
+    """Serial attached 3270 coax interface."""
+
     def __init__(self, serial):
         if serial is None:
             raise ValueError('Serial port is required')
@@ -27,6 +30,7 @@ class SerialInterface(Interface):
         self.legacy_firmware_version = None
 
     def reset(self):
+        """Reset the interface."""
         original_serial_timeout = self.serial.timeout
 
         self.serial.timeout = 5
@@ -52,31 +56,12 @@ class SerialInterface(Interface):
             (major, minor, patch) = struct.unpack('BBB', message[1:])
 
             self.legacy_firmware_detected = True
-            self.legacy_firmware_version = '{}.{}.{}'.format(major, minor, patch)
+            self.legacy_firmware_version = f'{major}.{minor}.{patch}'
         else:
             raise InterfaceError(f'Invalid reset response: {message}')
 
-    def transmit_receive(self, transmit_words, transmit_repeat_count=None,
-                         transmit_repeat_offset=1, receive_length=None,
-                         receive_timeout=None):
-        timeout_milliseconds = self._calculate_timeout_milliseconds(receive_timeout)
-
-        message = bytes([0x06])
-
-        message += _pack_transmit_header(transmit_repeat_count, transmit_repeat_offset)
-        message += _pack_transmit_data(transmit_words)
-        message += _pack_receive_header(receive_length, timeout_milliseconds)
-
-        self._write_message(message)
-
-        message = self._read_message()
-
-        if message[0] != 0x01:
-            raise _convert_error(message)
-
-        return _unpack_receive_data(message[1:])
-
     def enter_dfu_mode(self):
+        """Enter device firmware upgrade mode."""
         message = bytes([0xf2])
 
         self._write_message(message)
@@ -85,6 +70,40 @@ class SerialInterface(Interface):
 
         if message[0] != 0x01:
             raise _convert_error(message)
+
+    def _transmit_receive(self, outbound_frames, response_lengths, timeout):
+        if any(address is not None for (address, _) in outbound_frames):
+            raise NotImplementedError('Interface does not support 3299 protocol')
+
+        if len(response_lengths) != len(outbound_frames):
+            raise ValueError('Response lengths length must equal outbound frames length')
+
+        # Pack all messages before sending.
+        timeout_milliseconds = self._calculate_timeout_milliseconds(timeout)
+
+        messages = [_pack_transmit_receive_message(frame, response_length, timeout_milliseconds)
+                    for ((_, frame), response_length) in zip(outbound_frames, response_lengths)]
+
+        responses = []
+
+        for message in messages:
+            self._write_message(message)
+
+            message = self._read_message()
+
+            if message[0] == 0x01:
+                response = _unpack_transmit_receive_response(message[1:])
+            else:
+                error = _convert_error(message)
+
+                if not isinstance(error, (ReceiveError, ReceiveTimeout)):
+                    raise error
+
+                response = error
+
+            responses.append(response)
+
+        return responses
 
     def _calculate_timeout_milliseconds(self, timeout):
         milliseconds = 0
@@ -122,6 +141,7 @@ class SerialInterface(Interface):
 
 @contextmanager
 def open_serial_interface(serial_port, reset=True):
+    """Opens serial port and initializes serial attached 3270 coax interface."""
     with Serial(serial_port, 115200) as serial:
         serial.reset_input_buffer()
         serial.reset_output_buffer()
@@ -138,23 +158,52 @@ def open_serial_interface(serial_port, reset=True):
 
         yield interface
 
-def _pack_transmit_header(repeat_count, repeat_offset):
-    repeat = ((repeat_offset << 15) | repeat_count) if repeat_count else 0
+def _pack_transmit_receive_message(frame, response_length, timeout_milliseconds):
+    message = bytes([0x06])
 
-    return struct.pack('>H', repeat)
-
-def _pack_transmit_data(words):
+    repeat_count = 0
+    repeat_offset = 0
     bytes_ = bytearray()
 
-    for word in words:
-        bytes_ += struct.pack('<H', word)
+    if frame[0] == FrameFormat.WORDS:
+        if isinstance(frame[1], tuple):
+            repeat_count = frame[1][1]
 
-    return bytes_
+            for word in frame[1][0]:
+                bytes_ += struct.pack('<H', word)
+        else:
+            for word in frame[1]:
+                bytes_ += struct.pack('<H', word)
+    elif frame[0] == FrameFormat.WORD_DATA:
+        bytes_ += struct.pack('<H', frame[1])
 
-def _pack_receive_header(length, timeout_milliseconds):
-    return struct.pack('>HH', length or 0, timeout_milliseconds)
+        if len(frame) > 2:
+            if isinstance(frame[2], tuple):
+                repeat_offset = 1
+                repeat_count = frame[2][1]
 
-def _unpack_receive_data(bytes_):
+                for byte in frame[2][0]:
+                    bytes_ += struct.pack('<H', pack_data_word(byte))
+            else:
+                for byte in frame[2]:
+                    bytes_ += struct.pack('<H', pack_data_word(byte))
+    elif frame[0] == FrameFormat.DATA:
+        if isinstance(frame[1], tuple):
+            repeat_count = frame[1][1]
+
+            for byte in frame[1][0]:
+                bytes_ += struct.pack('<H', pack_data_word(byte))
+        else:
+            for byte in frame[1]:
+                bytes_ += struct.pack('<H', pack_data_word(byte))
+
+    message += struct.pack('>H', (repeat_offset << 15) | repeat_count)
+    message += bytes_
+    message += struct.pack('>HH', response_length, timeout_milliseconds)
+
+    return message
+
+def _unpack_transmit_receive_response(bytes_):
     return [(hi << 8) | lo for (lo, hi) in zip(bytes_[::2], bytes_[1::2])]
 
 ERROR_MAP = {

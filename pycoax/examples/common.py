@@ -5,7 +5,7 @@ from contextlib import contextmanager
 
 sys.path.append('..')
 
-from coax import open_serial_interface, poll, poll_ack
+from coax import open_serial_interface, Poll, PollAck
 
 DEFAULT_SERIAL_PORT = '/dev/ttyACM0'
 
@@ -29,14 +29,14 @@ def open_example_serial_interface(reset=True, poll_flush=True):
 
             count = 0
 
-            poll_response = poll(interface, receive_timeout=1)
+            poll_response = interface.execute(Poll(), timeout=1)
 
             while poll_response:
-                poll_ack(interface)
+                interface.execute(PollAck())
 
                 count += 1
 
-                poll_response = poll(interface, receive_timeout=1)
+                poll_response = interface.execute(Poll(), timeout=1)
 
             print(f'ACK\'d {count} POLL responses')
 

@@ -21,7 +21,7 @@ setup(
     author='Andrew Kay',
     author_email='projects@ajk.me',
     packages=['coax'],
-    install_requires=['more-itertools==8.7.0', 'pyserial==3.5', 'sliplib==0.6.2'],
+    install_requires=['pyserial==3.5', 'sliplib==0.6.2'],
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
     classifiers=[

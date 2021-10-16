@@ -4,10 +4,10 @@ coax.protocol
 """
 
 from enum import Enum
-from more_itertools import chunked
 
-from .exceptions import ProtocolError
+from .interface import FrameFormat
 from .parity import odd_parity
+from .exceptions import ProtocolError
 
 class Command(Enum):
     """Terminal command."""
@@ -91,6 +91,9 @@ class KeystrokePollResponse(PollResponse):
         super().__init__(value)
 
         self.scan_code = (value >> 2) & 0xff
+
+    def __repr__(self):
+        return f'<KeystrokePollResponse scan_code={self.scan_code}>'
 
 class Status:
     """Terminal status."""
@@ -184,207 +187,446 @@ class SecondaryControl:
 
     @property
     def value(self):
-        return bool(self.big) | 0
+        return int(bool(self.big))
 
     def __repr__(self):
         return f'<SecondaryControl big={self.big}>'
 
-def poll(interface, action=PollAction.NONE, **kwargs):
-    """Execute a POLL command."""
-    command_word = (action.value << 8) | pack_command_word(Command.POLL)
+class ReadCommand:
+    """Base class for read commands."""
 
-    response = _execute_read_command(interface, command_word, allow_trta_response=True,
-                                     unpack=False, **kwargs)
+    response_length = None
 
-    if response is None:
-        return None
+    def pack_outbound_frame(self):
+        raise NotImplementedError
 
-    word = response[0]
+    def unpack_inbound_frame(self, words):
+        raise NotImplementedError
 
-    if PollResponse.is_power_on_reset_complete(word):
-        return PowerOnResetCompletePollResponse(word)
+class WriteCommand:
+    """Base class for write commands."""
 
-    if PollResponse.is_keystroke(word):
-        return KeystrokePollResponse(word)
+    response_length = 1
 
-    return PollResponse(word)
+    def pack_outbound_frame(self):
+        raise NotImplementedError
 
-def poll_ack(interface, **kwargs):
-    """Execute a POLL_ACK command."""
-    command_word = pack_command_word(Command.POLL_ACK)
+    def unpack_inbound_frame(self, words):
+        if not is_tt_ar(words):
+            raise ProtocolError(f'Expected TT/AR response: {words}')
 
-    _execute_write_command(interface, command_word, **kwargs)
+class Poll(ReadCommand):
+    """POLL command."""
 
-def read_status(interface, **kwargs):
-    """Execute a READ_STATUS command."""
-    command_word = pack_command_word(Command.READ_STATUS)
+    response_length = 1
 
-    response = _execute_read_command(interface, command_word, **kwargs)
+    def __init__(self, action=PollAction.NONE):
+        self.action = action
 
-    return Status(response[0])
+    def pack_outbound_frame(self):
+        command_word = (self.action.value << 8) | pack_command_word(Command.POLL)
 
-def read_terminal_id(interface, **kwargs):
-    """Execute a READ_TERMINAL_ID command."""
-    command_word = pack_command_word(Command.READ_TERMINAL_ID)
+        return (FrameFormat.WORD_DATA, command_word)
 
-    response = _execute_read_command(interface, command_word, **kwargs)
+    def unpack_inbound_frame(self, words):
+        if len(words) != 1:
+            raise ProtocolError(f'Expected 1 word POLL response: {words}')
 
-    return TerminalId(response[0])
+        if is_tt_ar(words):
+            return None
 
-def read_extended_id(interface, **kwargs):
-    """Execute a READ_EXTENDED_ID command."""
-    command_word = pack_command_word(Command.READ_EXTENDED_ID)
+        word = words[0]
 
-    return _execute_read_command(interface, command_word, 4, allow_trta_response=True,
-                                 **kwargs)
+        if PollResponse.is_power_on_reset_complete(word):
+            return PowerOnResetCompletePollResponse(word)
 
-def read_address_counter_hi(interface, **kwargs):
-    """Execute a READ_ADDRESS_COUNTER_HI command."""
-    command_word = pack_command_word(Command.READ_ADDRESS_COUNTER_HI)
+        if PollResponse.is_keystroke(word):
+            return KeystrokePollResponse(word)
 
-    return _execute_read_command(interface, command_word, **kwargs)[0]
+        return PollResponse(word)
 
-def read_address_counter_lo(interface, **kwargs):
-    """Execute a READ_ADDRESS_COUTER_LO command."""
-    command_word = pack_command_word(Command.READ_ADDRESS_COUNTER_LO)
+class PollAck(WriteCommand):
+    """POLL_ACK command."""
 
-    return _execute_read_command(interface, command_word, **kwargs)[0]
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.POLL_ACK)
 
-def read_data(interface, **kwargs):
-    """Execute a READ_DATA command."""
-    command_word = pack_command_word(Command.READ_DATA)
+        return (FrameFormat.WORD_DATA, command_word)
 
-    return _execute_read_command(interface, command_word, **kwargs)
+class ReadStatus(ReadCommand):
+    """READ_STATUS command."""
 
-def read_multiple(interface, **kwargs):
-    """Execute a READ_MULTIPLE command."""
-    command_word = pack_command_word(Command.READ_MULTIPLE)
+    response_length = 1
 
-    return _execute_read_command(interface, command_word, 32,
-                                 validate_response_length=False, **kwargs)
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.READ_STATUS)
 
-def reset(interface, **kwargs):
-    """Execute a RESET command."""
-    command_word = pack_command_word(Command.RESET)
+        return (FrameFormat.WORD_DATA, command_word)
 
-    _execute_write_command(interface, command_word, **kwargs)
+    def unpack_inbound_frame(self, words):
+        if len(words) != 1:
+            raise ProtocolError(f'Expected 1 word READ_STATUS response: {words}')
 
-def load_control_register(interface, control, **kwargs):
-    """Execute a LOAD_CONTROL_REGISTER command."""
-    command_word = pack_command_word(Command.LOAD_CONTROL_REGISTER)
+        return Status(unpack_data_word(words[0]))
 
-    _execute_write_command(interface, command_word, bytes([control.value]), **kwargs)
+class ReadTerminalId(ReadCommand):
+    """READ_TERMINAL_ID command."""
 
-def load_secondary_control(interface, control, **kwargs):
-    """Execute a LOAD_SECONDARY_CONTROL command."""
-    command_word = pack_command_word(Command.LOAD_SECONDARY_CONTROL)
+    response_length = 1
 
-    _execute_write_command(interface, command_word, bytes([control.value]), **kwargs)
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.READ_TERMINAL_ID)
 
-def load_mask(interface, mask, **kwargs):
-    """Execute a LOAD_MASK command."""
-    command_word = pack_command_word(Command.LOAD_MASK)
+        return (FrameFormat.WORD_DATA, command_word)
 
-    _execute_write_command(interface, command_word, bytes([mask]), **kwargs)
+    def unpack_inbound_frame(self, words):
+        if len(words) != 1:
+            raise ProtocolError(f'Expected 1 word READ_TERMINAL_ID response: {words}')
 
-def load_address_counter_hi(interface, address, **kwargs):
-    """Execute a LOAD_ADDRESS_COUNTER_HI command."""
-    command_word = pack_command_word(Command.LOAD_ADDRESS_COUNTER_HI)
+        return TerminalId(unpack_data_word(words[0]))
 
-    _execute_write_command(interface, command_word, bytes([address]), **kwargs)
+class ReadExtendedId(ReadCommand):
+    """READ_EXTENDED_ID command."""
 
-def load_address_counter_lo(interface, address, **kwargs):
-    """Execute a LOAD_ADDRESS_COUNTER_LO command."""
-    command_word = pack_command_word(Command.LOAD_ADDRESS_COUNTER_LO)
+    response_length = 4
 
-    _execute_write_command(interface, command_word, bytes([address]), **kwargs)
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.READ_EXTENDED_ID)
 
-def write_data(interface, data, **kwargs):
-    """Execute a WRITE_DATA command."""
-    command_word = pack_command_word(Command.WRITE_DATA)
+        return (FrameFormat.WORD_DATA, command_word)
 
-    _execute_write_command(interface, command_word, data, **kwargs)
+    def unpack_inbound_frame(self, words):
+        if len(words) != 4:
+            raise ProtocolError(f'Expected 4 word READ_EXTENDED_ID response: {words}')
 
-def clear(interface, pattern, **kwargs):
-    """Execute a CLEAR command."""
-    command_word = pack_command_word(Command.CLEAR)
+        return unpack_data_words(words)
 
-    _execute_write_command(interface, command_word, bytes([pattern]), **kwargs)
+class ReadAddressCounterHi(ReadCommand):
+    """READ_ADDRESS_COUNTER_HI command."""
 
-def search_forward(interface, pattern, **kwargs):
-    """Execute a SEARCH_FORWARD command."""
-    command_word = pack_command_word(Command.SEARCH_FORWARD)
+    response_length = 1
 
-    _execute_write_command(interface, command_word, bytes([pattern]), **kwargs)
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.READ_ADDRESS_COUNTER_HI)
 
-def search_backward(interface, pattern, **kwargs):
-    """Execute a SEARCH_BACKWARD command."""
-    command_word = pack_command_word(Command.SEARCH_BACKWARD)
+        return (FrameFormat.WORD_DATA, command_word)
 
-    _execute_write_command(interface, command_word, bytes([pattern]), **kwargs)
+    def unpack_inbound_frame(self, words):
+        if len(words) != 1:
+            raise ProtocolError(f'Expected 1 word READ_ADDRESS_COUNTER_HI response: {words}')
 
-def insert_byte(interface, byte, **kwargs):
-    """Execute a INSERT_BYTE command."""
-    command_word = pack_command_word(Command.INSERT_BYTE)
+        return unpack_data_word(words[0])
 
-    _execute_write_command(interface, command_word, bytes([byte]), **kwargs)
+class ReadAddressCounterLo(ReadCommand):
+    """READ_ADDRESS_COUNTER_LO command."""
 
-def start_operation(interface):
-    """Execute a START_OPERATION command."""
-    raise NotImplementedError
+    response_length = 1
 
-def diagnostic_reset(interface):
-    """Execute a DIAGNOSTIC_RESET command."""
-    raise NotImplementedError
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.READ_ADDRESS_COUNTER_LO)
 
-def read_feature_id(interface, feature_address, **kwargs):
-    """Execute a READ_FEATURE_ID command."""
-    command_word = pack_command_word(Command.READ_FEATURE_ID, feature_address)
+        return (FrameFormat.WORD_DATA, command_word)
 
-    response = _execute_read_command(interface, command_word, 1, allow_trta_response=True,
-                                     **kwargs)
+    def unpack_inbound_frame(self, words):
+        if len(words) != 1:
+            raise ProtocolError(f'Expected 1 word READ_ADDRESS_COUNTER_LO response: {words}')
 
-    if response is None:
-        return None
+        return unpack_data_word(words[0])
 
-    return response[0]
+class ReadData(ReadCommand):
+    """READ_DATA command."""
 
-def eab_read_data(interface, feature_address, **kwargs):
-    """Execute a EAB_READ_DATA command."""
-    command_word = pack_command_word(Command.EAB_READ_DATA, feature_address)
+    response_length = 1
 
-    return _execute_read_command(interface, command_word, **kwargs)
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.READ_DATA)
 
-def eab_load_mask(interface, feature_address, mask, **kwargs):
-    """Execute a EAB_LOAD_MASK command."""
-    command_word = pack_command_word(Command.EAB_LOAD_MASK, feature_address)
+        return (FrameFormat.WORD_DATA, command_word)
 
-    _execute_write_command(interface, command_word, bytes([mask]), **kwargs)
+    def unpack_inbound_frame(self, words):
+        if len(words) != 1:
+            raise ProtocolError(f'Expected 1 word READ_DATA response: {words}')
 
-def eab_write_alternate(interface, feature_address, data, **kwargs):
-    """Execute a EAB_WRITE_ALTERNATE command."""
-    command_word = pack_command_word(Command.EAB_WRITE_ALTERNATE, feature_address)
+        return unpack_data_word(words[0])
 
-    _execute_write_command(interface, command_word, data, **kwargs)
+class ReadMultiple(ReadCommand):
+    """READ_MULTIPLE command."""
 
-def eab_read_multiple(interface, feature_address, **kwargs):
-    """Execute a EAB_READ_MULTIPLE command."""
-    command_word = pack_command_word(Command.EAB_READ_MULTIPLE, feature_address)
+    response_length = 32
 
-    return _execute_read_command(interface, command_word, 32,
-                                 validate_response_length=False, **kwargs)
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.READ_MULTIPLE)
 
-def eab_write_under_mask(interface, feature_address, byte, **kwargs):
-    """Execute a EAB_WRITE_UNDER_MASK command."""
-    command_word = pack_command_word(Command.EAB_WRITE_UNDER_MASK, feature_address)
+        return (FrameFormat.WORD_DATA, command_word)
 
-    _execute_write_command(interface, command_word, bytes([byte]), **kwargs)
+    def unpack_inbound_frame(self, words):
+        if len(words) == 0:
+            raise ProtocolError(f'Expected 1 or more word READ_MULTIPLE response: {words}')
 
-def eab_read_status(interface, feature_address, **kwargs):
-    """Execute a EAB_READ_STATUS command."""
-    command_word = pack_command_word(Command.EAB_READ_STATUS, feature_address)
+        return unpack_data_words(words)
 
-    return _execute_read_command(interface, command_word, **kwargs)[0]
+class Reset(WriteCommand):
+    """RESET command."""
+
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.RESET)
+
+        return (FrameFormat.WORD_DATA, command_word)
+
+class LoadControlRegister(WriteCommand):
+    """LOAD_CONTROL_REGISTER command."""
+
+    def __init__(self, control):
+        self.control = control
+
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.LOAD_CONTROL_REGISTER)
+
+        return (FrameFormat.WORD_DATA, command_word, [self.control.value])
+
+class LoadSecondaryControl(WriteCommand):
+    """LOAD_SECONDARY_CONTROL command."""
+
+    def __init__(self, control):
+        self.control = control
+
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.LOAD_SECONDARY_CONTROL)
+
+        return (FrameFormat.WORD_DATA, command_word, [self.control.value])
+
+class LoadMask(WriteCommand):
+    """LOAD_MASK command."""
+
+    def __init__(self, mask):
+        self.mask = mask
+
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.LOAD_MASK)
+
+        return (FrameFormat.WORD_DATA, command_word, [self.mask])
+
+class LoadAddressCounterHi(WriteCommand):
+    """LOAD_ADDRESS_COUNTER_HI command."""
+
+    def __init__(self, address):
+        if address < 0 or address > 255:
+            raise ValueError('Address is out of range')
+
+        self.address = address
+
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.LOAD_ADDRESS_COUNTER_HI)
+
+        return (FrameFormat.WORD_DATA, command_word, [self.address])
+
+class LoadAddressCounterLo(WriteCommand):
+    """LOAD_ADDRESS_COUNTER_LO command."""
+
+    def __init__(self, address):
+        if address < 0 or address > 255:
+            raise ValueError('Address is out of range')
+
+        self.address = address
+
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.LOAD_ADDRESS_COUNTER_LO)
+
+        return (FrameFormat.WORD_DATA, command_word, [self.address])
+
+class WriteData(WriteCommand):
+    """WRITE_DATA command."""
+
+    def __init__(self, data):
+        self.data = data
+
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.WRITE_DATA)
+
+        return (FrameFormat.WORD_DATA, command_word, self.data)
+
+class Clear(WriteCommand):
+    """CLEAR command."""
+
+    def __init__(self, pattern):
+        self.pattern = pattern
+
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.CLEAR)
+
+        return (FrameFormat.WORD_DATA, command_word, [self.pattern])
+
+class SearchForward(WriteCommand):
+    """SEARCH_FORWARD command."""
+
+    def __init__(self, pattern):
+        self.pattern = pattern
+
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.SEARCH_FORWARD)
+
+        return (FrameFormat.WORD_DATA, command_word, [self.pattern])
+
+class SearchBackward(WriteCommand):
+    """SEARCH_BACKWARD command."""
+
+    def __init__(self, pattern):
+        self.pattern = pattern
+
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.SEARCH_BACKWARD)
+
+        return (FrameFormat.WORD_DATA, command_word, [self.pattern])
+
+class InsertByte(WriteCommand):
+    """INSERT_BYTE command."""
+
+    def __init__(self, byte):
+        self.byte = byte
+
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.INSERT_BYTE)
+
+        return (FrameFormat.WORD_DATA, command_word, [self.byte])
+
+class StartOperation(WriteCommand):
+    """START_OPERATION command."""
+
+    def pack_outbound_frame(self):
+        raise NotImplementedError
+
+    def unpack_inbound_frame(self, words):
+        raise NotImplementedError
+
+class DiagnosticReset(WriteCommand):
+    """DIAGNOSTIC_RESET command."""
+
+    def pack_outbound_frame(self):
+        raise NotImplementedError
+
+    def unpack_inbound_frame(self, words):
+        raise NotImplementedError
+
+class ReadFeatureId(ReadCommand):
+    """READ_FEATURE_ID command."""
+
+    response_length = 1
+
+    def __init__(self, feature_address):
+        self.feature_address = feature_address
+
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.READ_FEATURE_ID, self.feature_address)
+
+        return (FrameFormat.WORD_DATA, command_word)
+
+    def unpack_inbound_frame(self, words):
+        if len(words) != 1:
+            raise ProtocolError(f'Expected 1 word READ_FEATURE_ID response: {words}')
+
+        if is_tt_ar(words):
+            return None
+
+        return unpack_data_word(words[0])
+
+class EABReadData(ReadCommand):
+    """EAB_READ_DATA command."""
+
+    response_length = 1
+
+    def __init__(self, feature_address):
+        self.feature_address = feature_address
+
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.EAB_READ_DATA, self.feature_address)
+
+        return (FrameFormat.WORD_DATA, command_word)
+
+    def unpack_inbound_frame(self, words):
+        if len(words) != 1:
+            raise ProtocolError(f'Expected 1 word EAB_READ_DATA response: {words}')
+
+        return unpack_data_words(words)
+
+class EABLoadMask(WriteCommand):
+    """EAB_LOAD_MASK command."""
+
+    def __init__(self, feature_address, mask):
+        self.feature_address = feature_address
+        self.mask = mask
+
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.EAB_LOAD_MASK, self.feature_address)
+
+        return (FrameFormat.WORD_DATA, command_word, [self.mask])
+
+class EABWriteAlternate(WriteCommand):
+    """EAB_WRITE_ALTERNATE command."""
+
+    def __init__(self, feature_address, data):
+        self.feature_address = feature_address
+        self.data = data
+
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.EAB_WRITE_ALTERNATE, self.feature_address)
+
+        return (FrameFormat.WORD_DATA, command_word, self.data)
+
+class EABReadMultiple(ReadCommand):
+    """EAB_READ_MULTIPLE command."""
+
+    response_length = 32
+
+    def __init__(self, feature_address):
+        self.feature_address = feature_address
+
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.EAB_READ_MULTIPLE, self.feature_address)
+
+        return (FrameFormat.WORD_DATA, command_word)
+
+    def unpack_inbound_frame(self, words):
+        return unpack_data_words(words)
+
+class EABWriteUnderMask(WriteCommand):
+    """EAB_WRITE_UNDER_MASK command."""
+
+    def __init__(self, feature_address, byte):
+        self.feature_address = feature_address
+        self.byte = byte
+
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.EAB_WRITE_UNDER_MASK, self.feature_address)
+
+        return (FrameFormat.WORD_DATA, command_word, [self.byte])
+
+class EABReadStatus(ReadCommand):
+    """EAB_READ_STATUS command."""
+
+    response_length = 1
+
+    def __init__(self, feature_address):
+        self.feature_address = feature_address
+
+    def pack_outbound_frame(self):
+        command_word = pack_command_word(Command.EAB_READ_STATUS, self.feature_address)
+
+        return (FrameFormat.WORD_DATA, command_word)
+
+    def unpack_inbound_frame(self, words):
+        if len(words) != 1:
+            raise ProtocolError(f'Expected 1 word EAB_READ_STATUS response: {words}')
+
+        return unpack_data_word(words[0])
+
+class Data(WriteCommand):
+    """Unaccompanied data."""
+
+    def __init__(self, data):
+        self.data = data
+
+    def pack_outbound_frame(self):
+        return (FrameFormat.DATA, self.data)
 
 def pack_command_word(command, feature_address=None):
     """Pack a command into a 10-bit command word."""
@@ -398,6 +640,10 @@ def pack_data_word(byte, set_parity=True):
     parity = odd_parity(byte) if set_parity else 0
 
     return (byte << 2) | (parity << 1)
+
+def is_tt_ar(words):
+    """Is the word a TT/AR (transmission turnaround / auto response)?"""
+    return len(words) == 1 and words[0] == 0
 
 def is_data_word(word):
     """Is data word bit set?"""
@@ -423,61 +669,3 @@ def pack_data_words(bytes_, set_parity=True):
 def unpack_data_words(words, check_parity=False):
     """Unpack the data bytes from 10-bit data words."""
     return bytes([unpack_data_word(word, check_parity=check_parity) for word in words])
-
-def _execute_read_command(interface, command_word, response_length=1,
-                          validate_response_length=True, allow_trta_response=False,
-                          trta_value=None, unpack=True, **kwargs):
-    """Execute a standard read command."""
-    response = interface.transmit_receive([command_word], receive_length=response_length,
-                                          **kwargs)
-
-    if allow_trta_response and len(response) == 1 and response[0] == 0:
-        return trta_value
-
-    if validate_response_length and len(response) != response_length:
-        raise ProtocolError((f'Expected {response_length} word response: {response}'))
-
-    return unpack_data_words(response) if unpack else response
-
-def _execute_write_command(interface, command_word, data=None,
-        jumbo_write_strategy=None, **kwargs):
-    """Execute a standard write command."""
-    length = 1
-
-    if isinstance(data, tuple):
-        length += len(data[0]) * data[1]
-    elif data is not None:
-        length += len(data)
-
-    max_length = 1024
-
-    if jumbo_write_strategy == 'split' and length > max_length:
-        if isinstance(data, tuple):
-            data_words = pack_data_words(data[0]) * data[1]
-        else:
-            data_words = pack_data_words(data)
-
-        for words in chunked([command_word, *data_words], max_length):
-            _execute_write(interface, words, None, **kwargs)
-    else:
-        data_words = []
-        transmit_repeat_count = None
-
-        if isinstance(data, tuple):
-            data_words = pack_data_words(data[0])
-            transmit_repeat_count = data[1]
-        elif data is not None:
-            data_words = pack_data_words(data)
-
-        _execute_write(interface, [command_word, *data_words],
-                       transmit_repeat_count, **kwargs)
-
-def _execute_write(interface, words, transmit_repeat_count, **kwargs):
-    response = interface.transmit_receive(words, transmit_repeat_count,
-            receive_length=1, **kwargs)
-
-    if len(response) != 1:
-        raise ProtocolError(f'Expected 1 word response: {response}')
-
-    if response[0] != 0:
-        raise ProtocolError(f'Expected TR/TA response: {response}')

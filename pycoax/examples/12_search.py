@@ -2,65 +2,60 @@
 
 from common import open_example_serial_interface
 
-from coax import read_address_counter_hi, read_address_counter_lo, read_status, load_address_counter_hi, load_address_counter_lo, write_data, load_mask, search_forward, search_backward
+from coax import ReadAddressCounterHi, ReadAddressCounterLo, ReadStatus, LoadAddressCounterHi, LoadAddressCounterLo, WriteData, LoadMask, SearchForward, SearchBackward
 
 with open_example_serial_interface() as interface:
-    load_address_counter_hi(interface, 0)
-    load_address_counter_lo(interface, 80)
+    interface.execute([LoadAddressCounterHi(0), LoadAddressCounterLo(80)])
 
-    write_data(interface, bytes.fromhex('a7 84 8b 8b 8e 33 00 96 8e 91 8b 83 19'))
+    interface.execute(WriteData(bytes.fromhex('a7 84 8b 8b 8e 33 00 96 8e 91 8b 83 19')))
 
-    load_address_counter_hi(interface, 0)
-    load_address_counter_lo(interface, 81)
+    interface.execute([LoadAddressCounterHi(0), LoadAddressCounterLo(81)])
 
-    load_mask(interface, 0xff)
+    interface.execute(LoadMask(0xff))
 
-    search_forward(interface, 0x83)
+    interface.execute(SearchForward(0x83))
 
-    status = read_status(interface)
+    status = interface.execute(ReadStatus())
 
     print(status)
 
     while status.busy:
-        status = read_status(interface)
+        status = interface.execute(ReadStatus())
 
         print(status)
 
-    hi = read_address_counter_hi(interface)
-    lo = read_address_counter_lo(interface)
+    [hi, lo] = interface.execute([ReadAddressCounterHi(), ReadAddressCounterLo()])
 
     print(f'hi = {hi}, lo = {lo}')
 
-    search_backward(interface, 0x84)
+    interface.execute(SearchBackward(0x84))
 
-    status = read_status(interface)
+    status = interface.execute(ReadStatus())
 
     print(status)
 
     while status.busy:
-        status = read_status(interface)
+        status = interface.execute(ReadStatus())
 
         print(status)
 
-    hi = read_address_counter_hi(interface)
-    lo = read_address_counter_lo(interface)
+    [hi, lo] = interface.execute([ReadAddressCounterHi(), ReadAddressCounterLo()])
 
     print(f'hi = {hi}, lo = {lo}')
 
-    load_mask(interface, 0xf0)
+    interface.execute(LoadMask(0xf0))
 
-    search_forward(interface, 0x30)
+    interface.execute(SearchForward(0x30))
 
-    status = read_status(interface)
+    status = interface.execute(ReadStatus())
 
     print(status)
 
     while status.busy:
-        status = read_status(interface)
+        status = interface.execute(ReadStatus())
 
         print(status)
 
-    hi = read_address_counter_hi(interface)
-    lo = read_address_counter_lo(interface)
+    [hi, lo] = interface.execute([ReadAddressCounterHi(), ReadAddressCounterLo()])
 
     print(f'hi = {hi}, lo = {lo}')

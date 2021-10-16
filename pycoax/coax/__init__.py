@@ -10,40 +10,42 @@ from .protocol import (
     TerminalType,
     Control,
     SecondaryControl,
-    poll,
-    poll_ack,
-    read_status,
-    read_terminal_id,
-    read_extended_id,
-    read_address_counter_hi,
-    read_address_counter_lo,
-    read_data,
-    read_multiple,
-    reset,
-    load_control_register,
-    load_secondary_control,
-    load_mask,
-    load_address_counter_hi,
-    load_address_counter_lo,
-    write_data,
-    clear,
-    search_forward,
-    search_backward,
-    insert_byte,
-    start_operation,
-    diagnostic_reset,
-    read_feature_id,
-    eab_read_data,
-    eab_load_mask,
-    eab_write_alternate,
-    eab_read_multiple,
-    eab_write_under_mask,
-    eab_read_status
+    Poll,
+    PollAck,
+    ReadStatus,
+    ReadTerminalId,
+    ReadExtendedId,
+    ReadAddressCounterHi,
+    ReadAddressCounterLo,
+    ReadData,
+    ReadMultiple,
+    Reset,
+    LoadControlRegister,
+    LoadSecondaryControl,
+    LoadMask,
+    LoadAddressCounterHi,
+    LoadAddressCounterLo,
+    WriteData,
+    Clear,
+    SearchForward,
+    SearchBackward,
+    InsertByte,
+    StartOperation,
+    DiagnosticReset,
+    ReadFeatureId,
+    EABReadData,
+    EABLoadMask,
+    EABWriteAlternate,
+    EABReadMultiple,
+    EABWriteUnderMask,
+    EABReadStatus,
+    Data
 )
 
 from .features import (
     Feature,
-    get_features
+    read_feature_ids,
+    parse_features
 )
 
 from .exceptions import (
@@ -53,3 +55,5 @@ from .exceptions import (
     ReceiveTimeout,
     ProtocolError
 )
+
+from .compat import *
