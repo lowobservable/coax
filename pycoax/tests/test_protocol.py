@@ -175,6 +175,9 @@ class ReadExtendedIdTestCase(unittest.TestCase):
     def test_pack(self):
         self.assertEqual(ReadExtendedId().pack_outbound_frame(), (FrameFormat.WORD_DATA, 0b000_00111_01))
 
+    def test_unpack_tt_ar(self):
+        self.assertIsNone(ReadFeatureId(7).unpack_inbound_frame([0b0000000000]))
+
     def test_unpack_extended_id(self):
         self.assertEqual(ReadExtendedId().unpack_inbound_frame([0b11000001_00, 0b00110100_00, 0b10000011_00, 0b00000000_00]), bytes.fromhex('c1 34 83 00'))
 

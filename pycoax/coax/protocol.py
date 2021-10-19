@@ -229,11 +229,11 @@ class Poll(ReadCommand):
         return (FrameFormat.WORD_DATA, command_word)
 
     def unpack_inbound_frame(self, words):
-        if len(words) != 1:
-            raise ProtocolError(f'Expected 1 word POLL response: {words}')
-
         if is_tt_ar(words):
             return None
+
+        if len(words) != 1:
+            raise ProtocolError(f'Expected 1 word POLL response: {words}')
 
         word = words[0]
 
@@ -296,6 +296,9 @@ class ReadExtendedId(ReadCommand):
         return (FrameFormat.WORD_DATA, command_word)
 
     def unpack_inbound_frame(self, words):
+        if is_tt_ar(words):
+            return None
+
         if len(words) != 4:
             raise ProtocolError(f'Expected 4 word READ_EXTENDED_ID response: {words}')
 
@@ -521,11 +524,11 @@ class ReadFeatureId(ReadCommand):
         return (FrameFormat.WORD_DATA, command_word)
 
     def unpack_inbound_frame(self, words):
-        if len(words) != 1:
-            raise ProtocolError(f'Expected 1 word READ_FEATURE_ID response: {words}')
-
         if is_tt_ar(words):
             return None
+
+        if len(words) != 1:
+            raise ProtocolError(f'Expected 1 word READ_FEATURE_ID response: {words}')
 
         return unpack_data_word(words[0])
 
