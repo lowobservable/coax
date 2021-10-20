@@ -1,5 +1,6 @@
 import unittest
-from unittest.mock import Mock, call
+from unittest.mock import Mock, create_autospec, call
+from serial import Serial
 import sliplib
 
 import context
@@ -10,13 +11,13 @@ from coax.exceptions import InterfaceError, ReceiveTimeout
 
 class SerialInterfaceResetTestCase(unittest.TestCase):
     def setUp(self):
-        self.serial = Mock()
+        self.serial = create_autospec(Serial, instance=True)
 
         self.serial.timeout = None
 
         self.interface = SerialInterface(self.serial)
 
-        self.interface._write_message = Mock()
+        self.interface._write_message = Mock(wraps=self.interface._write_message)
         self.interface._read_message = Mock(return_value=bytes.fromhex('01 32 70'))
 
     def test_message_is_sent(self):
@@ -81,13 +82,13 @@ class SerialInterfaceResetTestCase(unittest.TestCase):
 
 class SerialInterfaceTransmitReceiveTestCase(unittest.TestCase):
     def setUp(self):
-        self.serial = Mock()
+        self.serial = create_autospec(Serial, instance=True)
 
         self.serial.timeout = None
 
         self.interface = SerialInterface(self.serial)
 
-        self.interface._write_message = Mock()
+        self.interface._write_message = Mock(wraps=self.interface._write_message)
         self.interface._read_message = Mock()
 
     def test_words_frame(self):
@@ -208,11 +209,11 @@ class SerialInterfaceTransmitReceiveTestCase(unittest.TestCase):
 
 class SerialInterfaceReadMessageTestCase(unittest.TestCase):
     def setUp(self):
-        self.serial = Mock()
+        self.serial = create_autospec(Serial, instance=True)
 
         self.interface = SerialInterface(self.serial)
 
-        self.interface.slip_serial = Mock()
+        self.interface.slip_serial = Mock(wraps=self.interface.slip_serial)
 
     def test(self):
         # Arrange
@@ -258,11 +259,11 @@ class SerialInterfaceReadMessageTestCase(unittest.TestCase):
 
 class SerialInterfaceWriteMessageTestCase(unittest.TestCase):
     def setUp(self):
-        self.serial = Mock()
+        self.serial = create_autospec(Serial, instance=True)
 
         self.interface = SerialInterface(self.serial)
 
-        self.interface.slip_serial = Mock()
+        self.interface.slip_serial = Mock(wraps=self.interface.slip_serial)
 
     def test(self):
         # Act
