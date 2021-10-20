@@ -16,11 +16,7 @@ class Interface:
         """Execute one or more commands."""
         (normalized_commands, has_multiple_commands) = _normalize_commands(commands)
 
-        (outbound_frames, response_lengths) = _pack_outbound_frames(normalized_commands)
-
-        inbound_frames = self._transmit_receive(outbound_frames, response_lengths, timeout)
-
-        responses = _unpack_inbound_frames(inbound_frames, normalized_commands)
+        responses = self._execute(normalized_commands, timeout)
 
         if has_multiple_commands:
             return responses
@@ -31,6 +27,15 @@ class Interface:
             raise response
 
         return response
+
+    def _execute(self, commands, timeout):
+        (outbound_frames, response_lengths) = _pack_outbound_frames(commands)
+
+        inbound_frames = self._transmit_receive(outbound_frames, response_lengths, timeout)
+
+        responses = _unpack_inbound_frames(inbound_frames, commands)
+
+        return responses
 
     def _transmit_receive(self, outbound_frames, response_lengths, timeout):
         raise NotImplementedError
