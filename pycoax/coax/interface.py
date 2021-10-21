@@ -5,6 +5,8 @@ coax.interface
 
 from enum import Enum
 
+from .exceptions import ProtocolError
+
 class Interface:
     """3270 coax interface."""
 
@@ -106,7 +108,10 @@ def _unpack_inbound_frames(frames, commands):
         if isinstance(frame, BaseException):
             responses.append(frame)
         else:
-            response = command.unpack_inbound_frame(frame)
+            try:
+                response = command.unpack_inbound_frame(frame)
+            except ProtocolError as error:
+                response = error
 
             responses.append(response)
 
