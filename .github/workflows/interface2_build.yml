@@ -49,7 +49,7 @@ jobs:
           aws-region: us-east-1
       - name: Get bitstream source SHA
         run: |
-          BITSTREAM_SOURCE_SHA=$(git log -n 1 --format=%H .)
+          BITSTREAM_SOURCE_SHA=$(git log -n 1 --format=%H rtl)
           echo Bitstream source SHA is $BITSTREAM_SOURCE_SHA
           echo "BITSTREAM_SOURCE_SHA=$BITSTREAM_SOURCE_SHA" >> $GITHUB_ENV
       - name: Check bitstream cache

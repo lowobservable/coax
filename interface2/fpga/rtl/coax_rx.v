@@ -26,36 +26,31 @@ module coax_rx (
 );
     parameter CLOCKS_PER_BIT = 8;
 
+    localparam CLOCKS_PER_HALF_BIT = CLOCKS_PER_BIT / 2;
+    localparam CLOCKS_PER_2_BIT = CLOCKS_PER_BIT * 2;
+    localparam CLOCKS_PER_3_BIT = CLOCKS_PER_BIT * 3;
+    localparam CLOCKS_LOSS_OF_MID_BIT_TRANSITION = CLOCKS_PER_BIT + (CLOCKS_PER_BIT / 2);
+
     localparam ERROR_LOSS_OF_MID_BIT_TRANSITION = 10'b0000000001;
     localparam ERROR_PARITY = 10'b0000000010;
     localparam ERROR_INVALID_END_SEQUENCE = 10'b0000000100;
 
     localparam STATE_IDLE = 0;
-    localparam STATE_START_SEQUENCE_1 = 1;
-    localparam STATE_START_SEQUENCE_2 = 2;
-    localparam STATE_START_SEQUENCE_3 = 3;
-    localparam STATE_START_SEQUENCE_4 = 4;
-    localparam STATE_START_SEQUENCE_5 = 5;
-    localparam STATE_START_SEQUENCE_6 = 6;
-    localparam STATE_START_SEQUENCE_7 = 7;
-    localparam STATE_START_SEQUENCE_8 = 8;
-    localparam STATE_START_SEQUENCE_9 = 9;
-    localparam STATE_SYNC_BIT = 10;
-    localparam STATE_DATA_BIT = 11;
-    localparam STATE_PARITY_BIT = 12;
-    localparam STATE_END_SEQUENCE_1 = 13;
-    localparam STATE_END_SEQUENCE_2 = 14;
-    localparam STATE_ERROR = 15;
+    localparam STATE_FIRST_SYNC_BIT = 1;
+    localparam STATE_SYNC_BIT = 2;
+    localparam STATE_DATA_BIT = 3;
+    localparam STATE_PARITY_BIT = 4;
+    localparam STATE_END_SEQUENCE_1 = 5;
+    localparam STATE_END_SEQUENCE_2 = 6;
+    localparam STATE_ERROR = 7;
 
-    reg [3:0] state = STATE_IDLE;
-    reg [3:0] next_state;
-    reg [7:0] state_counter;
-    reg [7:0] next_state_counter;
+    reg [2:0] state = STATE_IDLE;
+    reg [2:0] next_state;
 
     reg previous_rx;
 
-    reg bit_timer_reset = 0;
-    reg next_bit_timer_reset;
+    reg [$clog2(CLOCKS_PER_3_BIT):0] mid_bit_counter;
+    reg [$clog2(CLOCKS_PER_3_BIT):0] next_mid_bit_counter;
 
     reg [9:0] next_data;
     reg next_strobe;
@@ -70,25 +65,23 @@ module coax_rx (
     reg next_active;
     reg next_error;
 
-    wire sample;
-    wire synchronized;
+    wire ss_detector_strobe;
 
-    coax_rx_bit_timer #(
+    coax_rx_ss_detector #(
         .CLOCKS_PER_BIT(CLOCKS_PER_BIT)
-    ) bit_timer (
+    ) ss_detector (
         .clk(clk),
+        .reset(reset),
+        .enable(state == STATE_IDLE),
         .rx(rx),
-        .reset(bit_timer_reset),
-        .sample(sample),
-        .synchronized(synchronized)
+        .strobe(ss_detector_strobe)
     );
 
     always @(*)
     begin
         next_state = state;
-        next_state_counter = state_counter + 1;
 
-        next_bit_timer_reset = 0;
+        next_mid_bit_counter = mid_bit_counter + 1;
 
         next_data = data;
         next_strobe = 0;
@@ -102,288 +95,148 @@ module coax_rx (
         case (state)
             STATE_IDLE:
             begin
-                next_bit_timer_reset = 1;
-
-                if (!rx && previous_rx)
+                if (ss_detector_strobe)
                 begin
-                    next_state = STATE_START_SEQUENCE_1;
-                    next_state_counter = 0;
+                    // The start sequence ends with a code violation, so reset
+                    // the mid bit counter as if the next mid-bit transition
+                    // is half a bit away.
+                    next_mid_bit_counter = CLOCKS_PER_HALF_BIT;
+                    next_state = STATE_FIRST_SYNC_BIT;
                 end
             end
 
-            STATE_START_SEQUENCE_1:
+            STATE_FIRST_SYNC_BIT:
             begin
-                if (sample)
+                // This is really the first STATE_SYNC_BIT, but we treat it
+                // differently and consider it part of the start sequence as
+                // it must be a 1 and we don't consider the receiver active
+                // until this has been detected.
+                next_bit_counter = 0;
+
+                if (rx != previous_rx && mid_bit_counter > CLOCKS_PER_HALF_BIT)
                 begin
-                    if (synchronized && rx)
-                        next_state = STATE_START_SEQUENCE_2;
+                    next_mid_bit_counter = 0;
+
+                    if (rx)
+                        next_state = STATE_DATA_BIT;
                     else
                         next_state = STATE_IDLE;
-
-                    next_state_counter = 0;
                 end
-                else if (state_counter >= (CLOCKS_PER_BIT * 2))
+                else if (mid_bit_counter > CLOCKS_LOSS_OF_MID_BIT_TRANSITION)
                 begin
                     next_state = STATE_IDLE;
-                    next_state_counter = 0;
                 end
             end
 
-            STATE_START_SEQUENCE_2:
+            STATE_SYNC_BIT:
             begin
-                if (sample)
+                next_active = 1;
+                next_bit_counter = 0;
+
+                if (rx != previous_rx && mid_bit_counter > CLOCKS_PER_HALF_BIT)
                 begin
-                    if (synchronized && rx)
-                        next_state = STATE_START_SEQUENCE_3;
+                    next_mid_bit_counter = 0;
+
+                    if (rx)
+                        next_state = STATE_DATA_BIT;
                     else
-                        next_state = STATE_IDLE;
-
-                    next_state_counter = 0;
+                        next_state = STATE_END_SEQUENCE_1;
+                end
+                else if (mid_bit_counter > CLOCKS_LOSS_OF_MID_BIT_TRANSITION)
+                begin
+                    next_data = ERROR_LOSS_OF_MID_BIT_TRANSITION;
+                    next_state = STATE_ERROR;
                 end
             end
 
-            STATE_START_SEQUENCE_3:
+            STATE_DATA_BIT:
             begin
-                if (sample)
+                next_active = 1;
+
+                if (rx != previous_rx && mid_bit_counter > CLOCKS_PER_HALF_BIT)
                 begin
-                    if (synchronized && rx)
-                        next_state = STATE_START_SEQUENCE_4;
+                    next_mid_bit_counter = 0;
+
+                    next_input_data = { input_data[8:0], rx };
+
+                    if (bit_counter < 9)
+                        next_bit_counter = bit_counter + 1;
                     else
-                        next_state = STATE_IDLE;
-
-                    next_state_counter = 0;
+                        next_state = STATE_PARITY_BIT;
+                end
+                else if (mid_bit_counter > CLOCKS_LOSS_OF_MID_BIT_TRANSITION)
+                begin
+                    next_data = ERROR_LOSS_OF_MID_BIT_TRANSITION;
+                    next_state = STATE_ERROR;
                 end
             end
 
-            STATE_START_SEQUENCE_4:
+            STATE_PARITY_BIT:
             begin
-                if (sample)
+                next_active = 1;
+
+                if (rx != previous_rx && mid_bit_counter > CLOCKS_PER_HALF_BIT)
                 begin
-                    if (synchronized && rx)
-                        next_state = STATE_START_SEQUENCE_5;
+                    if (rx == input_data_parity)
+                    begin
+                        next_strobe = 1;
+                        next_data = input_data;
+                        next_state = STATE_SYNC_BIT;
+                    end
                     else
-                        next_state = STATE_IDLE;
+                    begin
+                        next_data = ERROR_PARITY;
+                        next_state = STATE_ERROR;
+                    end
 
-                    next_state_counter = 0;
+                    next_mid_bit_counter = 0;
+                end
+                else if (mid_bit_counter > CLOCKS_LOSS_OF_MID_BIT_TRANSITION)
+                begin
+                    next_data = ERROR_LOSS_OF_MID_BIT_TRANSITION;
+                    next_state = STATE_ERROR;
                 end
             end
 
-            STATE_START_SEQUENCE_5:
-            begin
-                if (sample)
-                begin
-                    if (synchronized && rx)
-                        next_state = STATE_START_SEQUENCE_6;
-                    else
-                        next_state = STATE_IDLE;
-
-                    next_state_counter = 0;
-                end
-            end
-
-            STATE_START_SEQUENCE_6:
-            begin
-                if (!rx)
-                begin
-                    next_state = STATE_START_SEQUENCE_7;
-                    next_state_counter = 0;
-                end
-                else if (state_counter >= CLOCKS_PER_BIT)
-                begin
-                    next_state = STATE_IDLE;
-                    next_state_counter = 0;
-                end
-            end
-
-            STATE_START_SEQUENCE_7:
+            STATE_END_SEQUENCE_1:
             begin
                 if (rx)
                 begin
-                    next_state = STATE_START_SEQUENCE_8;
-                    next_state_counter = 0;
+                    next_state = STATE_END_SEQUENCE_2;
+                    next_mid_bit_counter = 0;
                 end
-                else if (state_counter >= (CLOCKS_PER_BIT * 2))
+                else if (mid_bit_counter > CLOCKS_PER_BIT)
                 begin
-                    next_state = STATE_IDLE;
-                    next_state_counter = 0;
+                    next_data = ERROR_INVALID_END_SEQUENCE;
+                    next_state = STATE_ERROR;
                 end
             end
 
-            STATE_START_SEQUENCE_8:
+            STATE_END_SEQUENCE_2:
             begin
                 if (!rx)
                 begin
-                    next_bit_timer_reset = 1;
-                    next_state = STATE_START_SEQUENCE_9;
-                    next_state_counter = 0;
-                end
-                else if (state_counter >= (CLOCKS_PER_BIT * 2))
-                begin
                     next_state = STATE_IDLE;
-                    next_state_counter = 0;
+                end
+                else if (mid_bit_counter > CLOCKS_PER_3_BIT)
+                begin
+                    // TODO: should this go to ERROR on timeout?
+                    next_state = STATE_IDLE;
                 end
             end
 
-            STATE_START_SEQUENCE_9:
+            STATE_ERROR:
             begin
-                // This is really the first STATE_SYNC_BIT but we treat it
-                // differently and consider it part of the start
-                // sequence.
-
-                if (sample && synchronized)
-                begin
-                    if (rx)
-                    begin
-                        next_bit_counter = 0;
-                        next_state = STATE_DATA_BIT;
-                    end
-                    else
-                    begin
-                        next_state = STATE_IDLE;
-                    end
-
-                    next_state_counter = 0;
-                end
-                else if (state_counter >= CLOCKS_PER_BIT)
-                begin
-                    next_state = STATE_IDLE;
-                    next_state_counter = 0;
-                end
-           end
-
-           STATE_SYNC_BIT:
-           begin
-               next_active = 1;
-
-               if (sample)
-               begin
-                   if (synchronized)
-                   begin
-                       if (rx)
-                       begin
-                           next_bit_counter = 0;
-                           next_state = STATE_DATA_BIT;
-                       end
-                       else
-                       begin
-                           next_state = STATE_END_SEQUENCE_1;
-                       end
-
-                       next_state_counter = 0;
-                   end
-                   else
-                   begin
-                       next_data = ERROR_LOSS_OF_MID_BIT_TRANSITION;
-                       next_state = STATE_ERROR;
-                       next_state_counter = 0;
-                   end
-               end
-           end
-
-           STATE_DATA_BIT:
-           begin
-               next_active = 1;
-
-               if (sample)
-               begin
-                   if (synchronized)
-                   begin
-                       next_input_data = { input_data[8:0], rx };
-
-                       if (bit_counter < 9)
-                       begin
-                           next_bit_counter = bit_counter + 1;
-                       end
-                       else
-                       begin
-                           next_state = STATE_PARITY_BIT;
-                       end
-
-                       next_state_counter = 0;
-                   end
-                   else
-                   begin
-                       next_data = ERROR_LOSS_OF_MID_BIT_TRANSITION;
-                       next_state = STATE_ERROR;
-                       next_state_counter = 0;
-                   end
-               end
-           end
-
-           STATE_PARITY_BIT:
-           begin
-               next_active = 1;
-
-               if (sample)
-               begin
-                   if (synchronized)
-                   begin
-                       if (rx == input_data_parity)
-                       begin
-                           next_strobe = 1;
-                           next_data = input_data;
-                           next_state = STATE_SYNC_BIT;
-                       end
-                       else
-                       begin
-                           next_data = ERROR_PARITY;
-                           next_state = STATE_ERROR;
-                       end
-
-                       next_state_counter = 0;
-                   end
-                   else
-                   begin
-                       next_data = ERROR_LOSS_OF_MID_BIT_TRANSITION;
-                       next_state = STATE_ERROR;
-                       next_state_counter = 0;
-                   end
-               end
-           end
-
-           STATE_END_SEQUENCE_1:
-           begin
-               if (rx)
-               begin
-                   next_state = STATE_END_SEQUENCE_2;
-                   next_state_counter = 0;
-               end
-               else if (state_counter >= CLOCKS_PER_BIT)
-               begin
-                   next_data = ERROR_INVALID_END_SEQUENCE;
-                   next_state = STATE_ERROR;
-                   next_state_counter = 0;
-               end
-           end
-
-           STATE_END_SEQUENCE_2:
-           begin
-               // TODO: should this go to ERROR on timeout?
-               if (!rx)
-               begin
-                   next_state = STATE_IDLE;
-                   next_state_counter = 0;
-               end
-               else if (state_counter >= (CLOCKS_PER_BIT * 2))
-               begin
-                   next_state = STATE_IDLE;
-                   next_state_counter = 0;
-               end
-           end
-
-           STATE_ERROR:
-           begin
-               next_error = 1;
-           end
+                next_error = 1;
+            end
         endcase
     end
 
     always @(posedge clk)
     begin
         state <= next_state;
-        state_counter <= next_state_counter;
 
-        bit_timer_reset <= next_bit_timer_reset;
+        mid_bit_counter <= next_mid_bit_counter;
 
         data <= next_data;
         strobe <= next_strobe;
@@ -400,8 +253,6 @@ module coax_rx (
 
         if (reset)
         begin
-            bit_timer_reset <= 1;
-
             state <= STATE_IDLE;
 
             strobe <= 0;

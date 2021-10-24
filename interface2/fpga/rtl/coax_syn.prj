@@ -4,7 +4,7 @@
 
 add_file -verilog -lib work "coax_buffered_rx.v"
 add_file -verilog -lib work "coax_rx.v"
-add_file -verilog -lib work "coax_rx_bit_timer.v"
+add_file -verilog -lib work "coax_rx_ss_detector.v"
 add_file -verilog -lib work "coax_tx.v"
 add_file -verilog -lib work "coax_tx_bit_timer.v"
 add_file -verilog -lib work "coax_tx_distorter.v"

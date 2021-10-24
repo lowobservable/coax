@@ -36,29 +36,28 @@ module coax_rx_tb;
         $dumpfile("coax_rx_tb.vcd");
         $dumpvars(0, coax_rx_tb);
 
-        test_1;
-        test_2;
-        test_3;
-        test_4;
-        test_5;
-        test_6;
-        test_7;
-        test_8;
-        test_9;
-        test_10;
-        test_11;
-        test_12;
-        test_13;
-        test_14;
-        test_15;
-        test_16;
+        test_reset;
+        test_invalid_start_sequence_1_pulse;
+        test_invalid_start_sequence_2_pulse;
+        test_invalid_start_sequence_3_pulse;
+        test_invalid_start_sequence_4_pulse;
+        test_invalid_start_sequence_code_violation_first_half;
+        test_invalid_start_sequence_code_violation_second_half;
+        test_invalid_sync_bit;
+        test_loss_of_mid_bit_transition_error_data_bit_1;
+        test_loss_of_mid_bit_transition_error_data_bit_5;
+        test_loss_of_mid_bit_transition_error_parity_bit;
+        test_parity_error;
+        test_loss_of_mid_bit_transition_error_sync_end_bit;
+        test_invalid_end_sequence;
+        test_data;
 
         $finish;
     end
 
-    task test_1;
+    task test_reset;
     begin
-        $display("START: test_1");
+        $display("START: test_reset");
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
@@ -68,13 +67,13 @@ module coax_rx_tb;
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
-        $display("END: test_1");
+        $display("END: test_reset");
     end
     endtask
 
-    task test_2;
+    task test_invalid_start_sequence_1_pulse;
     begin
-        $display("START: test_2");
+        $display("START: test_invalid_start_sequence_1_pulse");
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
@@ -83,34 +82,15 @@ module coax_rx_tb;
         #64;
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
+        `assert_equal(dut.ss_detector.state, dut.ss_detector.STATE_IDLE, "ss_detector.state should be STATE_IDLE");
 
-        $display("END: test_2");
+        $display("END: test_invalid_start_sequence_1_pulse");
     end
     endtask
 
-    task test_3;
+    task test_invalid_start_sequence_2_pulse;
     begin
-        $display("START: test_3");
-
-        `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
-
-        mock_tx.tx_set(1);
-        #16;
-        mock_tx.tx_set(0);
-
-        mock_tx.tx_bit(1);
-
-        #64;
-
-        `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
-
-        $display("END: test_3");
-    end
-    endtask
-
-    task test_4;
-    begin
-        $display("START: test_4");
+        $display("START: test_invalid_start_sequence_2_pulse");
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
@@ -119,19 +99,19 @@ module coax_rx_tb;
         mock_tx.tx_set(0);
 
         mock_tx.tx_bit(1);
-        mock_tx.tx_bit(1);
 
         #64;
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
+        `assert_equal(dut.ss_detector.state, dut.ss_detector.STATE_IDLE, "ss_detector.state should be STATE_IDLE");
 
-        $display("END: test_4");
+        $display("END: test_invalid_start_sequence_2_pulse");
     end
     endtask
 
-    task test_5;
+    task test_invalid_start_sequence_3_pulse;
     begin
-        $display("START: test_5");
+        $display("START: test_invalid_start_sequence_3_pulse");
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
@@ -141,19 +121,19 @@ module coax_rx_tb;
 
         mock_tx.tx_bit(1);
         mock_tx.tx_bit(1);
-        mock_tx.tx_bit(1);
 
         #64;
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
+        `assert_equal(dut.ss_detector.state, dut.ss_detector.STATE_IDLE, "ss_detector.state should be STATE_IDLE");
 
-        $display("END: test_5");
+        $display("END: test_invalid_start_sequence_3_pulse");
     end
     endtask
 
-    task test_6;
+    task test_invalid_start_sequence_4_pulse;
     begin
-        $display("START: test_6");
+        $display("START: test_invalid_start_sequence_4_pulse");
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
@@ -164,19 +144,19 @@ module coax_rx_tb;
         mock_tx.tx_bit(1);
         mock_tx.tx_bit(1);
         mock_tx.tx_bit(1);
-        mock_tx.tx_bit(1);
 
         #64;
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
+        `assert_equal(dut.ss_detector.state, dut.ss_detector.STATE_IDLE, "ss_detector.state should be STATE_IDLE");
 
-        $display("END: test_6");
+        $display("END: test_invalid_start_sequence_4_pulse");
     end
     endtask
 
-    task test_7;
+    task test_invalid_start_sequence_code_violation_first_half;
     begin
-        $display("START: test_7");
+        $display("START: test_invalid_start_sequence_code_violation_first_half");
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
@@ -188,19 +168,19 @@ module coax_rx_tb;
         mock_tx.tx_bit(1);
         mock_tx.tx_bit(1);
         mock_tx.tx_bit(1);
-        mock_tx.tx_bit(1);
 
         #64;
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
+        `assert_equal(dut.ss_detector.state, dut.ss_detector.STATE_IDLE, "ss_detector.state should be STATE_IDLE");
 
-        $display("END: test_7");
+        $display("END: test_invalid_start_sequence_code_violation_first_half");
     end
     endtask
 
-    task test_8;
+    task test_invalid_start_sequence_code_violation_second_half;
     begin
-        $display("START: test_8");
+        $display("START: test_invalid_start_sequence_code_violation_second_half");
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
@@ -221,16 +201,17 @@ module coax_rx_tb;
         #64;
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
+        `assert_equal(dut.ss_detector.state, dut.ss_detector.STATE_IDLE, "ss_detector.state should be STATE_IDLE");
 
         mock_tx.tx_set(0);
 
-        $display("END: test_8");
+        $display("END: test_invalid_start_sequence_code_violation_second_half");
     end
     endtask
 
-    task test_9;
+    task test_invalid_sync_bit;
     begin
-        $display("START: test_9");
+        $display("START: test_invalid_sync_bit");
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
@@ -241,14 +222,15 @@ module coax_rx_tb;
         #64;
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
+        `assert_equal(dut.ss_detector.state, dut.ss_detector.STATE_IDLE, "ss_detector.state should be STATE_IDLE");
 
-        $display("END: test_9");
+        $display("END: test_invalid_sync_bit");
     end
     endtask
 
-    task test_10;
+    task test_loss_of_mid_bit_transition_error_data_bit_1;
     begin
-        $display("START: test_10");
+        $display("START: test_loss_of_mid_bit_transition_error_data_bit_1");
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
@@ -268,13 +250,13 @@ module coax_rx_tb;
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
-        $display("END: test_10");
+        $display("END: test_loss_of_mid_bit_transition_error_data_bit_1");
     end
     endtask
 
-    task test_11;
+    task test_loss_of_mid_bit_transition_error_data_bit_5;
     begin
-        $display("START: test_11");
+        $display("START: test_loss_of_mid_bit_transition_error_data_bit_5");
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
@@ -299,13 +281,13 @@ module coax_rx_tb;
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
-        $display("END: test_11");
+        $display("END: test_loss_of_mid_bit_transition_error_data_bit_5");
     end
     endtask
 
-    task test_12;
+    task test_loss_of_mid_bit_transition_error_parity_bit;
     begin
-        $display("START: test_12");
+        $display("START: test_loss_of_mid_bit_transition_error_parity_bit");
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
@@ -335,13 +317,13 @@ module coax_rx_tb;
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
-        $display("END: test_12");
+        $display("END: test_loss_of_mid_bit_transition_error_parity_bit");
     end
     endtask
 
-    task test_13;
+    task test_parity_error;
     begin
-        $display("START: test_13");
+        $display("START: test_parity_error");
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
@@ -372,13 +354,13 @@ module coax_rx_tb;
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
-        $display("END: test_13");
+        $display("END: test_parity_error");
     end
     endtask
 
-    task test_14;
+    task test_loss_of_mid_bit_transition_error_sync_end_bit;
     begin
-        $display("START: test_14");
+        $display("START: test_loss_of_mid_bit_transition_error_sync_end_bit");
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
@@ -409,13 +391,13 @@ module coax_rx_tb;
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
-        $display("END: test_14");
+        $display("END: test_loss_of_mid_bit_transition_error_sync_end_bit");
     end
     endtask
 
-    task test_15;
+    task test_invalid_end_sequence;
     begin
-        $display("START: test_15");
+        $display("START: test_invalid_end_sequence");
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
@@ -447,13 +429,13 @@ module coax_rx_tb;
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
-        $display("END: test_15");
+        $display("END: test_invalid_end_sequence");
     end
     endtask
 
-    task test_16;
+    task test_data;
     begin
-        $display("START: test_16");
+        $display("START: test_data");
 
         `assert_equal(dut.state, dut.STATE_IDLE, "state should be STATE_IDLE");
 
@@ -478,7 +460,7 @@ module coax_rx_tb;
 
         `assert_equal(dut.data, 10'b0110110011, "data not correct")
 
-        $display("END: test_16");
+        $display("END: test_data");
     end
     endtask
 
