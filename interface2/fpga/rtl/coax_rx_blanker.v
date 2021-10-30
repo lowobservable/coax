@@ -1,4 +1,4 @@
-// Copyright (c) 2020, Andrew Kay
+// Copyright (c) 2021, Andrew Kay
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,40 +14,43 @@
 
 `default_nettype none
 
-module coax_tx_distorter (
+module coax_rx_blanker (
     input clk,
-    input active_input,
-    input tx_input,
-    output reg active_output,
-    output reg tx_output,
-    output reg tx_delay_output,
-    output reg tx_n_output
+    input reset,
+    input enable,
+
+    input rx_input,
+    input tx_active,
+
+    output reg rx_output
 );
-    parameter CLOCKS_PER_BIT = 8;
+    parameter DELAY_CLOCKS = 2;
 
-    localparam DELAY_CLOCKS = CLOCKS_PER_BIT / 4;
-
-    reg [DELAY_CLOCKS-1:0] tx_d = { (DELAY_CLOCKS){1'b1} };
+    reg rx_input_d0;
 
     always @(posedge clk)
     begin
-        if (active_input)
-        begin
-            tx_d <= { tx_d[DELAY_CLOCKS-2:0], tx_input };
+        rx_input_d0 <= rx_input;
+    end
 
-            active_output <= 1;
-            tx_output <= tx_input;
-            tx_delay_output <= tx_d[DELAY_CLOCKS-1];
-            tx_n_output <= ~tx_input;
-        end
+    reg [DELAY_CLOCKS-1:0] blank;
+
+    always @(posedge clk)
+    begin
+        if (reset)
+            blank <= { (DELAY_CLOCKS){1'b0} };
+        else if (tx_active)
+            blank <= { (DELAY_CLOCKS){1'b1} };
         else
-        begin
-            tx_d <= { (DELAY_CLOCKS){1'b1} };
+            blank <= { blank[DELAY_CLOCKS-2:0], 1'b0 };
+    end
 
-            active_output <= 0;
-            tx_output <= 0;
-            tx_delay_output <= 0;
-            tx_n_output <= 0;
-        end
+    always @(posedge clk)
+    begin
+        // TODO: should enable be delayed 1 clock to match input?
+        if (!enable || !blank[DELAY_CLOCKS-1])
+            rx_output <= rx_input_d0;
+        else
+            rx_output <= 1'b0;
     end
 endmodule

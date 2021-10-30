@@ -40,13 +40,13 @@ module top (
     output gpio2,
     output gpio3
 );
+    localparam CLOCKS_PER_BIT = 16;
+
     reg [1:0] reset_n_d;
-    reg [1:0] rx_d;
 
     always @(posedge clk)
     begin
         reset_n_d <= { reset_n_d[0], reset_n };
-        rx_d <= { rx_d[0], rx };
     end
 
     reg reset;
@@ -89,8 +89,6 @@ module top (
         .tx_strobe(spi_tx_strobe)
     );
 
-    wire loopback;
-
     wire tx_reset;
     wire internal_tx_active;
     wire internal_tx;
@@ -103,7 +101,7 @@ module top (
     wire tx_parity;
 
     coax_buffered_tx #(
-        .CLOCKS_PER_BIT(16),
+        .CLOCKS_PER_BIT(CLOCKS_PER_BIT),
         .DEPTH(2048),
         .START_DEPTH(1536)
     ) coax_buffered_tx (
@@ -120,14 +118,8 @@ module top (
         .parity(tx_parity)
     );
 
-    reg internal_rx;
-
-    always @(posedge clk)
-    begin
-        internal_rx <= loopback ? internal_tx : (!internal_tx_active ? rx_d[1] : 0);
-    end
-
     wire rx_reset;
+    wire internal_rx;
     wire rx_active;
     wire rx_error;
     wire [9:0] rx_data;
@@ -136,7 +128,7 @@ module top (
     wire rx_parity;
 
     coax_buffered_rx #(
-        .CLOCKS_PER_BIT(16),
+        .CLOCKS_PER_BIT(CLOCKS_PER_BIT),
         .DEPTH(2048)
     ) coax_buffered_rx (
         .clk(clk),
@@ -148,6 +140,28 @@ module top (
         .read_strobe(rx_read_strobe),
         .empty(rx_empty),
         .parity(rx_parity)
+    );
+
+    wire loopback;
+    wire rx_debug;
+
+    coax_tx_rx_frontend #(
+        .CLOCKS_PER_BIT(CLOCKS_PER_BIT)
+    ) coax_tx_rx_frontend (
+        .clk(clk),
+        .reset(reset),
+
+        .loopback(loopback),
+        .tx_active_input(internal_tx_active),
+        .tx_input(internal_tx),
+        .rx_output(internal_rx),
+
+        .tx_active_output(tx_active),
+        .tx_n_output(tx_n),
+        .tx_delay_output(tx_delay),
+        .rx_input(rx),
+
+        .rx_debug(rx_debug)
     );
 
     control control (
@@ -181,20 +195,9 @@ module top (
         .rx_parity(rx_parity)
     );
 
-    coax_tx_distorter #(
-        .CLOCKS_PER_BIT(16)
-    ) coax_tx_distorter (
-        .clk(clk),
-        .active_input(!loopback && internal_tx_active),
-        .tx_input(internal_tx),
-        .active_output(tx_active),
-        .tx_delay(tx_delay),
-        .tx_n(tx_n)
-    );
-
     assign irq = rx_active || rx_error;
 
-    assign gpio0 = rx_d[1];
+    assign gpio0 = rx_debug;
     assign gpio1 = tx_active;
     assign gpio2 = rx_active;
     assign gpio3 = 0;
