@@ -58,5 +58,3 @@ from .exceptions import (
     ReceiveTimeout,
     ProtocolError
 )
-
-from .compat import *
