@@ -22,6 +22,7 @@ module coax_tx (
     input [9:0] data,
     input strobe,
     output ready,
+    input protocol,
     input parity
 );
     parameter CLOCKS_PER_BIT = 8;
@@ -48,6 +49,8 @@ module coax_tx (
 
     reg next_tx;
 
+    reg first_word;
+    reg next_first_word;
     reg end_sequence;
     reg next_end_sequence;
 
@@ -86,6 +89,7 @@ module coax_tx (
 
         next_tx = 0;
 
+        next_first_word = first_word;
         next_end_sequence = 0;
 
         next_output_data = output_data;
@@ -188,6 +192,7 @@ module coax_tx (
             START_SEQUENCE_9:
             begin
                 next_tx = 1;
+                next_first_word = 1;
 
                 if (last_clock)
                     next_state = SYNC_BIT;
@@ -197,10 +202,21 @@ module coax_tx (
             begin
                 next_tx = first_half ? 0 : 1;
 
-                next_bit_counter = 9;
-
                 if (last_clock)
+                begin
+                    // First word is 6 bits in 3299 protocol mode.
+                    if (protocol == 1 && first_word)
+                    begin
+                        next_output_data = { output_data[5:0], 4'b0 };
+                        next_bit_counter = 5;
+                    end
+                    else
+                    begin
+                        next_bit_counter = 9;
+                    end
+
                     next_state = DATA_BIT;
+                end
             end
 
             DATA_BIT:
@@ -228,6 +244,8 @@ module coax_tx (
 
                 if (last_clock)
                 begin
+                    next_first_word = 0;
+
                     if (output_data_full)
                     begin
                         next_state = SYNC_BIT;
@@ -280,6 +298,7 @@ module coax_tx (
         active <= (state != IDLE); // TODO: this causes active to remain high one additional clock cycle
         tx <= next_tx;
 
+        first_word <= next_first_word;
         end_sequence <= next_end_sequence;
 
         output_data <= next_output_data;

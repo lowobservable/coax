@@ -10,6 +10,9 @@ from .exceptions import ProtocolError
 class Interface:
     """3270 coax interface."""
 
+    def __init__(self):
+        self.features = set()
+
     def reset(self):
         """Reset the interface."""
         raise NotImplementedError
@@ -41,6 +44,11 @@ class Interface:
 
     def _transmit_receive(self, outbound_frames, response_lengths, timeout):
         raise NotImplementedError
+
+class InterfaceFeature(Enum):
+    """Interface feature."""
+
+    PROTOCOL_3299 = 0x10
 
 class FrameFormat(Enum):
     """3270 coax frame format."""

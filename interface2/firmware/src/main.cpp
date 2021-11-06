@@ -45,7 +45,7 @@ SPICoaxTransceiver spiCoaxTransceiver;
 
 volatile uint16_t coaxBuffer[COAX_BUFFER_SIZE];
 
-Coax coax(spiCoaxTransceiver, CoaxParity::Even, coaxBuffer, COAX_BUFFER_SIZE);
+Coax coax(spiCoaxTransceiver, coaxBuffer, COAX_BUFFER_SIZE);
 
 volatile uint8_t messageBuffer[MESSAGE_BUFFER_SIZE];
 

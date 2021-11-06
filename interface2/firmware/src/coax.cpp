@@ -21,10 +21,12 @@
 
 #include "coax.h"
 
-Coax::Coax(SPICoaxTransceiver &spiCoaxTransceiver, CoaxParity parity,
-        volatile uint16_t *buffer, size_t bufferSize) :
+Coax::Coax(SPICoaxTransceiver &spiCoaxTransceiver, volatile uint16_t *buffer,
+        size_t bufferSize) :
     _spiCoaxTransceiver(spiCoaxTransceiver),
-    _parity(parity),
+    _txProtocol(CoaxProtocol::_3270),
+    _rxProtocol(CoaxProtocol::_3270),
+    _parity(CoaxParity::Even),
     _buffer(buffer),
     _bufferSize(bufferSize)
 {
@@ -41,7 +43,10 @@ bool Coax::init()
         return false;
     }
 
+    _spiCoaxTransceiver.setTXProtocol(_txProtocol);
     _spiCoaxTransceiver.setTXParity(_parity);
+
+    _spiCoaxTransceiver.setRXProtocol(_rxProtocol);
     _spiCoaxTransceiver.setRXParity(_parity);
 
     _isInitialized = true;
@@ -59,8 +64,60 @@ void Coax::reset()
 
     _spiCoaxTransceiver.reset();
 
+    _spiCoaxTransceiver.setTXProtocol(_txProtocol);
     _spiCoaxTransceiver.setTXParity(_parity);
+
+    _spiCoaxTransceiver.setRXProtocol(_rxProtocol);
     _spiCoaxTransceiver.setRXParity(_parity);
+}
+
+void Coax::setTXProtocol(CoaxProtocol protocol)
+{
+    if (!_isInitialized) {
+        _txProtocol = protocol;
+        return;
+    }
+
+    if (_txProtocol == protocol) {
+        return;
+    }
+
+    _spiCoaxTransceiver.setTXProtocol(protocol);
+
+    _txProtocol = protocol;
+}
+
+void Coax::setRXProtocol(CoaxProtocol protocol)
+{
+    if (!_isInitialized) {
+        _rxProtocol = protocol;
+        return;
+    }
+
+    if (_rxProtocol == protocol) {
+        return;
+    }
+
+    _spiCoaxTransceiver.setRXProtocol(protocol);
+
+    _rxProtocol = protocol;
+}
+
+void Coax::setParity(CoaxParity parity)
+{
+    if (!_isInitialized) {
+        _parity = parity;
+        return;
+    }
+
+    if (_parity == parity) {
+        return;
+    }
+
+    _spiCoaxTransceiver.setTXParity(parity);
+    _spiCoaxTransceiver.setRXParity(parity);
+
+    _parity = parity;
 }
 
 int Coax::transmit(const uint16_t *buffer, size_t bufferCount)
@@ -434,9 +491,19 @@ void SPICoaxTransceiver::setLoopback(bool loopback)
     writeRegister(COAX_REGISTER_CONTROL, loopback ? COAX_REGISTER_CONTROL_LOOPBACK : 0, COAX_REGISTER_CONTROL_LOOPBACK);
 }
 
+void SPICoaxTransceiver::setTXProtocol(CoaxProtocol protocol)
+{
+    writeRegister(COAX_REGISTER_CONTROL, protocol == CoaxProtocol::_3299 ? COAX_REGISTER_CONTROL_TX_PROTOCOL : 0, COAX_REGISTER_CONTROL_TX_PROTOCOL);
+}
+
 void SPICoaxTransceiver::setTXParity(CoaxParity parity)
 {
     writeRegister(COAX_REGISTER_CONTROL, parity == CoaxParity::Even ? COAX_REGISTER_CONTROL_TX_PARITY : 0, COAX_REGISTER_CONTROL_TX_PARITY);
+}
+
+void SPICoaxTransceiver::setRXProtocol(CoaxProtocol protocol)
+{
+    writeRegister(COAX_REGISTER_CONTROL, protocol == CoaxProtocol::_3299 ? COAX_REGISTER_CONTROL_RX_PROTOCOL : 0, COAX_REGISTER_CONTROL_RX_PROTOCOL);
 }
 
 void SPICoaxTransceiver::setRXParity(CoaxParity parity)

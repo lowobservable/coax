@@ -22,6 +22,7 @@ module coax_rx (
     output reg error,
     output reg [9:0] data,
     output reg strobe = 0,
+    input protocol,
     input parity
 );
     parameter CLOCKS_PER_BIT = 8;
@@ -95,6 +96,8 @@ module coax_rx (
         case (state)
             STATE_IDLE:
             begin
+                next_input_data = 10'b0;
+
                 if (ss_detector_strobe)
                 begin
                     // The start sequence ends with a code violation, so reset
@@ -111,7 +114,7 @@ module coax_rx (
                 // differently and consider it part of the start sequence as
                 // it must be a 1 and we don't consider the receiver active
                 // until this has been detected.
-                next_bit_counter = 0;
+                next_bit_counter = (protocol == 1 ? 4 : 0);
 
                 if (rx != previous_rx && mid_bit_counter > CLOCKS_PER_HALF_BIT)
                 begin

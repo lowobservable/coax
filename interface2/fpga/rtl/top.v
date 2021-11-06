@@ -98,6 +98,7 @@ module top (
     wire tx_empty;
     wire tx_full;
     wire tx_ready;
+    wire tx_protocol;
     wire tx_parity;
 
     coax_buffered_tx #(
@@ -115,6 +116,7 @@ module top (
         .empty(tx_empty),
         .full(tx_full),
         .ready(tx_ready),
+        .protocol(tx_protocol),
         .parity(tx_parity)
     );
 
@@ -125,6 +127,7 @@ module top (
     wire [9:0] rx_data;
     wire rx_read_strobe;
     wire rx_empty;
+    wire rx_protocol;
     wire rx_parity;
 
     coax_buffered_rx #(
@@ -139,6 +142,7 @@ module top (
         .data(rx_data),
         .read_strobe(rx_read_strobe),
         .empty(rx_empty),
+        .protocol(rx_protocol),
         .parity(rx_parity)
     );
 
@@ -184,6 +188,7 @@ module top (
         .tx_empty(tx_empty),
         .tx_full(tx_full),
         .tx_ready(tx_ready),
+        .tx_protocol(tx_protocol),
         .tx_parity(tx_parity),
 
         .rx_reset(rx_reset),
@@ -192,6 +197,7 @@ module top (
         .rx_data(rx_data),
         .rx_read_strobe(rx_read_strobe),
         .rx_empty(rx_empty),
+        .rx_protocol(rx_protocol),
         .rx_parity(rx_parity)
     );
 

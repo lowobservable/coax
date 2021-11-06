@@ -25,6 +25,7 @@ module coax_buffered_tx (
     output empty,
     output full,
     output reg ready,
+    input protocol,
     input parity
 );
     parameter CLOCKS_PER_BIT = 8;
@@ -56,6 +57,7 @@ module coax_buffered_tx (
         .data(coax_tx_data),
         .strobe(coax_tx_strobe),
         .ready(coax_tx_ready),
+        .protocol(protocol),
         .parity(parity)
     );
 

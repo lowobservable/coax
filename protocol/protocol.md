@@ -54,18 +54,29 @@ calculation includes the sync bit. Words are transmitted most significant bit
 
 ![Diagram showing two 10-bit words within a 3270 protocol frame](data.svg)
 
+### 3299 Variant
+
+The 3299 variant of the protocol includes a 6-bit address word at the start
+of each frame, specifying the multiplexer port the remainder of the frame
+should be sent to.
+
+![Diagram showing a 3299 protocol frame with 6-bit address word](3299.svg)
+
+As with 10-bit words, the 6-bit address word starts with a sync bit and ends
+with an even parity bit.
+
+### Words
+
 All communication is initiated by the controller when it sends a frame
 containing a command word and optional data words. The attached device responds
 with a frame containing one or more data words.
-
-### Words
 
 Except for the `POLL` command response, words are either:
 
   * Command - encapsulates a single 8-bit command byte, sent from a controller
     to an attached device
   * Data - encapsulates a single 8-bit data byte
-  * Transmission Turnaround (TR/TA) - sent as an acknowledgment of a command
+  * Transmission Turnaround (TT/AR) - sent as an acknowledgment of a command
     when there is no response data
 
 | Bit                     |  9  |  8  |  7  |  6  |  5  |  4  |  3  |  2  |  1  |  0  |

@@ -5,7 +5,7 @@ import sliplib
 
 import context
 
-from coax.interface import FrameFormat
+from coax.interface import InterfaceFeature, FrameFormat
 from coax.serial_interface import SerialInterface
 from coax.exceptions import InterfaceError, ReceiveTimeout
 
@@ -25,7 +25,7 @@ class SerialInterfaceResetTestCase(unittest.TestCase):
         self.interface.reset()
 
         # Assert
-        self.interface._write_message.assert_called_with(bytes.fromhex('01'))
+        self.interface._write_message.assert_any_call(bytes.fromhex('01'))
 
     def test_non_legacy_response_is_handled_correctly(self):
         # Act
@@ -191,9 +191,27 @@ class SerialInterfaceTransmitReceiveTestCase(unittest.TestCase):
         # Assert
         self.interface._write_message.assert_called_with(bytes.fromhex('06 00 00 ff 03 02 00 fe 03 00 01 01 f4'))
 
-    def test_addressed_frame(self):
+    def test_addressed_frame_with_3299_protocol_feature(self):
+        # Arrange
+        self.interface.features.add(InterfaceFeature.PROTOCOL_3299)
+
+        self.interface._read_message.return_value=bytes.fromhex('01 00 00')
+
+        # Act
+        responses = self.interface._transmit_receive([(0b111000, (FrameFormat.WORDS, [0b1111111111, 0b0000000000]))], [1], None)
+
+        # Assert
+        self.assertEqual(responses, [[0]])
+
+        self.interface._write_message.assert_called_with(bytes.fromhex('06 00 00 38 80 ff 03 00 00 00 01 00 00'))
+
+    def test_addressed_frame_with_no_3299_protocol_feature(self):
+        # Arrange
+        self.interface._read_message.return_value=bytes.fromhex('01 00 00')
+
+        # Act and assert
         with self.assertRaises(NotImplementedError):
-            self.interface._transmit_receive([(0b111000, (FrameFormat.WORD_DATA, 0b1111111111, [0x00, 0xff]))], [1], 0.5)
+            self.interface._transmit_receive([(0b111000, (FrameFormat.WORDS, [0b1111111111, 0b0000000000]))], [1], None)
 
     def test_multiple_frames(self):
         # Arrange

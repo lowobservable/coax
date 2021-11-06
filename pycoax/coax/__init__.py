@@ -1,5 +1,6 @@
 from .__about__ import __version__
 
+from .interface import InterfaceFeature
 from .serial_interface import SerialInterface, open_serial_interface
 
 from .protocol import (
@@ -47,6 +48,8 @@ from .features import (
     read_feature_ids,
     parse_features
 )
+
+from .multiplexer import get_device_address
 
 from .exceptions import (
     InterfaceError,

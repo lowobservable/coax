@@ -28,6 +28,7 @@ module coax_buffered_tx_tb;
         .data(data),
         .load_strobe(load_strobe),
         .start_strobe(start_strobe),
+        .protocol(1'b0),
         .parity(1'b1)
     );
 

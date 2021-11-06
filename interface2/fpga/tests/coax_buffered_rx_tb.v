@@ -31,6 +31,7 @@ module coax_buffered_rx_tb;
         .reset(reset),
         .rx(rx),
         .read_strobe(read_strobe),
+        .protocol(1'b0),
         .parity(1'b1)
     );
 

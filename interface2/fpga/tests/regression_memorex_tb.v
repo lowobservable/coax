@@ -22,6 +22,7 @@ module regression_memorex_tb;
         .clk(clk),
         .reset(reset),
         .rx(rx),
+        .protocol(1'b0),
         .parity(1'b1)
     );
 

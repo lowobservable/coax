@@ -28,6 +28,12 @@
 
 #define COAX_ERROR_NOT_INITIALIZED -1024
 
+enum class CoaxProtocol
+{
+    _3270 = 0,
+    _3299 = 1
+};
+
 enum class CoaxParity
 {
     Odd = 0,
@@ -39,12 +45,16 @@ class SPICoaxTransceiver;
 class Coax
 {
 public:
-    Coax(SPICoaxTransceiver &spiCoaxTransceiver, CoaxParity parity,
-            volatile uint16_t *buffer, size_t bufferSize);
+    Coax(SPICoaxTransceiver &spiCoaxTransceiver, volatile uint16_t *buffer,
+            size_t bufferSize);
 
     bool init();
 
     void reset();
+
+    void setTXProtocol(CoaxProtocol protocol);
+    void setRXProtocol(CoaxProtocol protocol);
+    void setParity(CoaxParity parity);
 
     int transmit(const uint16_t *buffer, size_t bufferCount);
     int receive(uint16_t *buffer, size_t bufferSize, uint16_t timeout);
@@ -53,6 +63,8 @@ public:
 
 private:
     SPICoaxTransceiver &_spiCoaxTransceiver;
+    CoaxProtocol _txProtocol;
+    CoaxProtocol _rxProtocol;
     CoaxParity _parity;
 
     bool _isInitialized;
@@ -79,7 +91,9 @@ private:
 
 #define COAX_REGISTER_CONTROL 0x2
 #define COAX_REGISTER_CONTROL_LOOPBACK 0x01
+#define COAX_REGISTER_CONTROL_TX_PROTOCOL 0x04
 #define COAX_REGISTER_CONTROL_TX_PARITY 0x08
+#define COAX_REGISTER_CONTROL_RX_PROTOCOL 0x20
 #define COAX_REGISTER_CONTROL_RX_PARITY 0x40
 
 #define COAX_REGISTER_DEVICE_ID 0xf
@@ -100,7 +114,9 @@ public:
     int receive(uint16_t *buffer, size_t bufferSize);
 
     void setLoopback(bool loopback);
+    void setTXProtocol(CoaxProtocol protocol);
     void setTXParity(CoaxParity parity);
+    void setRXProtocol(CoaxProtocol protocol);
     void setRXParity(CoaxParity parity);
 
     inline bool isTXComplete()

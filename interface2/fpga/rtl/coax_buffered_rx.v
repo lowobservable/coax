@@ -24,6 +24,7 @@ module coax_buffered_rx (
     input read_strobe,
     output empty,
     output full,
+    input protocol,
     input parity
 );
     parameter CLOCKS_PER_BIT = 8;
@@ -45,6 +46,7 @@ module coax_buffered_rx (
         .error(coax_rx_error),
         .data(coax_rx_data),
         .strobe(coax_rx_strobe),
+        .protocol(protocol),
         .parity(parity)
     );
 

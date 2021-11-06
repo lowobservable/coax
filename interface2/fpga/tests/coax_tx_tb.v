@@ -24,6 +24,7 @@ module coax_tx_tb;
         .reset(reset),
         .data(data),
         .strobe(strobe),
+        .protocol(1'b0),
         .parity(1'b1)
     );
 

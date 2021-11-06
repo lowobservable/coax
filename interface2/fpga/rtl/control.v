@@ -36,6 +36,7 @@ module control (
     input tx_empty,
     input tx_full,
     input tx_ready,
+    output tx_protocol,
     output tx_parity,
 
     // RX
@@ -45,6 +46,7 @@ module control (
     input [9:0] rx_data,
     output reg rx_read_strobe,
     input rx_empty,
+    output rx_protocol,
     output rx_parity
 );
     parameter DEFAULT_CONTROL_REGISTER = 8'b01001000;
@@ -342,6 +344,8 @@ module control (
 
     assign loopback = control_register[0];
 
+    assign tx_protocol = control_register[2];
     assign tx_parity = control_register[3];
+    assign rx_protocol = control_register[5];
     assign rx_parity = control_register[6];
 endmodule

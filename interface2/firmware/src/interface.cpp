@@ -46,6 +46,9 @@ Interface::Interface(Coax &coax, Indicators &indicators) :
     _coax(coax),
     _indicators(indicators)
 {
+    _coax.setTXProtocol(CoaxProtocol::_3270);
+    _coax.setRXProtocol(CoaxProtocol::_3270);
+    _coax.setParity(CoaxParity::Even);
 }
 
 void Interface::handleMessage(uint8_t *buffer, size_t bufferCount)
@@ -143,6 +146,12 @@ void Interface::handleTransmitReceive(uint8_t *buffer, size_t bufferCount)
         }
     }
 
+    if (transmitBuffer[0] & 0x8000) {
+        _coax.setTXProtocol(CoaxProtocol::_3299);
+    } else {
+        _coax.setTXProtocol(CoaxProtocol::_3270);
+    }
+
     int transmitCount = _coax.transmit(transmitBuffer, transmitBufferCount);
 
     if (transmitCount < 0) {
@@ -214,8 +223,9 @@ void Interface::handleInfo(uint8_t *buffer, size_t bufferCount)
         buffer[2] = INFO_HARDWARE_TYPE;
         buffer[3] = INFO_FIRMWARE_VERSION;
         buffer[4] = INFO_MESSAGE_BUFFER_SIZE;
+        buffer[5] = INFO_FEATURES;
 
-        MessageSender::send(buffer, 5);
+        MessageSender::send(buffer, 6);
     } else if (query == INFO_HARDWARE_TYPE) {
         buffer[0] = 0x01;
 
@@ -238,6 +248,11 @@ void Interface::handleInfo(uint8_t *buffer, size_t bufferCount)
         memcpy(buffer + 1, &size, sizeof(uint32_t));
 
         MessageSender::send(buffer, 5);
+    } else if (query == INFO_FEATURES) {
+        buffer[0] = 0x01;
+        buffer[1] = FEATURE_PROTOCOL_3299;
+
+        MessageSender::send(buffer, 2);
     } else {
         sendErrorMessage(ERROR_INVALID_MESSAGE, "HANDLE_INFO_UNKNOWN_QUERY");
         return;
