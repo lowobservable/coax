@@ -89,7 +89,7 @@ class SerialInterface(Interface):
         message = self._read_message()
 
         if message[0] != 0x01:
-            return _convert_error(message)
+            raise _convert_error(message)
 
         known_feature_values = {feature.value for feature in InterfaceFeature}
 
