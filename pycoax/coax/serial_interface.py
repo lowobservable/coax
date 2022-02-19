@@ -80,6 +80,42 @@ class SerialInterface(Interface):
         if message[0] != 0x01:
             raise _convert_error(message)
 
+    def snoopie_report(self):
+        message = bytes([0xf3])
+
+        self._write_message(message)
+
+        message = self._read_message()
+
+        if message[0] != 0x01:
+            raise Exception('Uh, some sort of problem with the SNOOPIE report')
+
+        if len(message) != 1 + 1 + (2 * 256):
+            raise Exception('Uh, length of SNOOPIE report is not correct')
+
+        write_index = message[1]
+        buffer = message[2:]
+
+        print()
+        print()
+
+        print('* ' * 40)
+
+        print(f'write_index = {write_index}')
+
+        for i in range(256):
+            x = buffer[i * 2] | (buffer[(i * 2) + 1] << 8)
+
+            counter = (x & 0xfff0) >> 4
+            probes = x & 0x0f
+
+            print(f'{counter} {probes}')
+
+        print('* ' * 40)
+
+        print()
+        print()
+
     def _get_features(self):
         """Get interface features."""
         message = bytes([0xf0, 0x07])
@@ -124,6 +160,10 @@ class SerialInterface(Interface):
 
                 if not isinstance(error, (ReceiveError, ReceiveTimeout)):
                     raise error
+
+                # vvv
+                self.snoopie_report()
+                # ^^^
 
                 response = error
 

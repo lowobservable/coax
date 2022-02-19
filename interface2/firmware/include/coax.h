@@ -61,6 +61,8 @@ public:
 
     void handleInterrupt();
 
+    int snoopie(uint16_t *buffer, size_t bufferSize, uint8_t *writeIndex);
+
 private:
     SPICoaxTransceiver &_spiCoaxTransceiver;
     CoaxProtocol _txProtocol;
@@ -128,6 +130,8 @@ public:
     {
         return readRegister(COAX_REGISTER_STATUS) & COAX_REGISTER_STATUS_RX_ACTIVE;
     };
+
+    int snoopie(uint16_t *buffer, size_t bufferSize, uint8_t *writeIndex);
 
 private:
     void spiTransfer(const uint8_t *transmitBuffer, uint8_t *receiveBuffer, size_t count);

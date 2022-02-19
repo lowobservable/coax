@@ -25,6 +25,7 @@
 #define COMMAND_INFO 0xf0
 #define COMMAND_TEST 0xf1
 #define COMMAND_DFU 0xf2
+#define COMMAND_SNOOPIE_REPORT 0xf3
 
 #define INFO_SUPPORTED_QUERIES 0x01
 #define INFO_HARDWARE_TYPE 0x02
@@ -59,4 +60,7 @@ private:
     void handleInfo(uint8_t *buffer, size_t bufferCount);
     void handleTest(uint8_t *buffer, size_t bufferCount);
     void handleDFU(uint8_t *buffer, size_t bufferCount);
+
+    void snoopieTeamAway();
+    void handleSnoopieReport(uint8_t *buffer, size_t bufferCount);
 };

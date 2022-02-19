@@ -19,6 +19,7 @@ add_file -verilog -lib work "third_party/ram_sdp.v"
 add_file -verilog -lib work "strobe_cdc.v"
 add_file -verilog -lib work "top.v"
 add_file -verilog -lib work "dual_clock_spi_device.v"
+add_file -verilog -lib work "snoopie.v"
 add_file -constraint -lib work "clocks.sdc"
 #implementation: "coax_Implmnt"
 impl -add coax_Implmnt -type fpga

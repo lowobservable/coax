@@ -91,6 +91,8 @@ class SerialInterfaceTransmitReceiveTestCase(unittest.TestCase):
         self.interface._write_message = Mock(wraps=self.interface._write_message)
         self.interface._read_message = Mock()
 
+        self.interface.snoopie_report = Mock()
+
     def test_words_frame(self):
         # Arrange
         self.interface._read_message.return_value=bytes.fromhex('01 00 00')

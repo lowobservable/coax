@@ -168,6 +168,23 @@ module top (
         .rx_debug(rx_debug)
     );
 
+    wire snoopie_enable;
+    wire [15:0] snoopie_read_data;
+    wire snoopie_read_strobe;
+    wire [7:0] snoopie_write_address;
+
+    snoopie snoopie (
+        .clk(clk),
+        .enable(snoopie_enable),
+
+        .probes({ internal_rx, rx_error, 2'b00 }),
+
+        .read_data(snoopie_read_data),
+        .read_strobe(snoopie_read_strobe),
+
+        .xxx_write_address(snoopie_write_address)
+    );
+
     control control (
         .clk(clk),
         .reset(reset),
@@ -198,7 +215,12 @@ module top (
         .rx_read_strobe(rx_read_strobe),
         .rx_empty(rx_empty),
         .rx_protocol(rx_protocol),
-        .rx_parity(rx_parity)
+        .rx_parity(rx_parity),
+
+        .snoopie_enable(snoopie_enable),
+        .snoopie_read_data(snoopie_read_data),
+        .snoopie_read_strobe(snoopie_read_strobe),
+        .snoopie_write_address(snoopie_write_address)
     );
 
     assign irq = rx_active || rx_error;

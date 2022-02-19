@@ -84,6 +84,8 @@ void Interface::handleMessage(uint8_t *buffer, size_t bufferCount)
         handleTest(buffer + 3, count - 1);
     } else if (command == COMMAND_DFU) {
         handleDFU(buffer + 3, count - 1);
+    } else if (command == COMMAND_SNOOPIE_REPORT) {
+        handleSnoopieReport(buffer + 3, count - 1);
     } else {
         sendErrorMessage(ERROR_UNKNOWN_COMMAND, NULL);
     }
@@ -177,6 +179,10 @@ void Interface::handleTransmitReceive(uint8_t *buffer, size_t bufferCount)
 
     if (receiveCount < 0) {
         Debug::trap(403, "error = %d", receiveCount);
+
+        // vvv
+        snoopieTeamAway();
+        // ^^^
 
         _indicators.error();
 
@@ -291,4 +297,35 @@ void Interface::handleDFU(uint8_t *buffer, size_t bufferCount)
     HAL_Delay(1000);
 
     resetToBootloader();
+}
+
+uint16_t snoopieBuffer[256];
+uint8_t snoopieWriteIndex;
+
+void Interface::snoopieTeamAway()
+{
+    printf("\r\n\r\nSNOOPIE +++\r\n");
+
+    _coax.snoopie((uint16_t *) &snoopieBuffer, 256, &snoopieWriteIndex);
+
+    printf("writeIndex = %d\r\n", snoopieWriteIndex);
+
+    for (size_t index = 0; index < 256; index++) {
+        uint16_t counter = (snoopieBuffer[index] & 0xfff0) >> 4;
+        uint8_t probes = snoopieBuffer[index] & 0x0f;
+
+        printf("%d %d\r\n", counter, probes);
+    }
+
+    printf("SNOOPIE ---\r\n");
+}
+
+void Interface::handleSnoopieReport(uint8_t *buffer, size_t bufferCount)
+{
+    buffer[0] = 0x01;
+    buffer[1] = snoopieWriteIndex;
+
+    memcpy(buffer + 2, &snoopieBuffer, 256 * sizeof(uint16_t));
+
+    MessageSender::send(buffer, 2 + (256 * sizeof(uint16_t)));
 }

@@ -47,7 +47,12 @@ module control (
     output reg rx_read_strobe,
     input rx_empty,
     output rx_protocol,
-    output rx_parity
+    output rx_parity,
+
+    output reg snoopie_enable,
+    input [15:0] snoopie_read_data,
+    output reg snoopie_read_strobe,
+    input [7:0] snoopie_write_address
 );
     parameter DEFAULT_CONTROL_REGISTER = 8'b01001000;
 
@@ -64,6 +69,11 @@ module control (
     localparam STATE_RX_3 = 10;
     localparam STATE_RX_4 = 11;
     localparam STATE_RESET = 12;
+    localparam STATE_SNOOPIE_1 = 13;
+    localparam STATE_SNOOPIE_2 = 14;
+    localparam STATE_SNOOPIE_3 = 15;
+    localparam STATE_SNOOPIE_4 = 16;
+    localparam STATE_SNOOPIE_5 = 17;
 
     reg [7:0] state = STATE_IDLE;
     reg [7:0] next_state;
@@ -93,6 +103,9 @@ module control (
     reg next_rx_read_strobe;
     reg [15:0] rx_buffer;
     reg [15:0] next_rx_buffer;
+
+    reg next_snoopie_enable;
+    reg next_snoopie_read_strobe;
 
     reg [1:0] spi_cs_n_d;
 
@@ -124,6 +137,9 @@ module control (
         next_rx_read_strobe = 0;
         next_rx_buffer = rx_buffer;
 
+        next_snoopie_enable = 1;
+        next_snoopie_read_strobe = 0;
+
         case (state)
             STATE_IDLE:
             begin
@@ -136,6 +152,7 @@ module control (
                         4'h3: next_state = STATE_WRITE_REGISTER_1;
                         4'h4: next_state = STATE_TX_1;
                         4'h5: next_state = STATE_RX_1;
+                        4'h6: next_state = STATE_SNOOPIE_1;
                         4'hf: next_state = STATE_RESET;
                     endcase
                 end
@@ -280,6 +297,57 @@ module control (
 
                 next_state = STATE_IDLE;
             end
+
+            STATE_SNOOPIE_1:
+            begin
+                next_snoopie_enable = 0;
+
+                next_spi_tx_data = snoopie_write_address;
+                next_spi_tx_strobe = 1;
+
+                next_state = STATE_SNOOPIE_2;
+            end
+
+            STATE_SNOOPIE_2:
+            begin
+                next_snoopie_enable = 0;
+
+                if (spi_rx_strobe)
+                    next_state = STATE_SNOOPIE_3;
+            end
+
+            STATE_SNOOPIE_3:
+            begin
+                next_snoopie_enable = 0;
+
+                next_spi_tx_data = snoopie_read_data[15:8];
+                next_spi_tx_strobe = 1;
+
+                next_state = STATE_SNOOPIE_4;
+            end
+
+            STATE_SNOOPIE_4:
+            begin
+                next_snoopie_enable = 0;
+
+                if (spi_rx_strobe)
+                begin
+                    next_snoopie_read_strobe = 1;
+
+                    next_spi_tx_data = snoopie_read_data[7:0];
+                    next_spi_tx_strobe = 1;
+
+                    next_state = STATE_SNOOPIE_5;
+                end
+            end
+
+            STATE_SNOOPIE_5:
+            begin
+                next_snoopie_enable = 0;
+
+                if (spi_rx_strobe)
+                    next_state = STATE_SNOOPIE_3;
+            end
         endcase
 
         if (spi_cs_n_d[1])
@@ -317,6 +385,9 @@ module control (
         rx_read_strobe <= next_rx_read_strobe;
         rx_buffer <= next_rx_buffer;
 
+        snoopie_enable <= next_snoopie_enable;
+        snoopie_read_strobe <= next_snoopie_read_strobe;
+
         if (reset)
         begin
             state <= STATE_IDLE;
@@ -337,6 +408,9 @@ module control (
             rx_reset <= 0;
             rx_read_strobe <= 0;
             rx_buffer <= 0;
+
+            snoopie_enable <= 1;
+            snoopie_read_strobe <= 0;
         end
 
         previous_tx_active <= tx_active;

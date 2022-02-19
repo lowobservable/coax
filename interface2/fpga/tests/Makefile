@@ -17,6 +17,7 @@ coax_tx_rx_frontend_tb: coax_tx_rx_frontend_tb.v $(RTL)/coax_tx_rx_frontend.v $(
 control_tb: control_tb.v $(RTL)/control.v $(RTL)/coax_buffered_tx.v $(RTL)/coax_tx.v $(RTL)/coax_tx_bit_timer.v $(RTL)/coax_buffer.v $(RTL)/third_party/*.v
 tx_rx_loopback_tb: tx_rx_loopback_tb.v $(RTL)/coax_tx.v $(RTL)/coax_tx_bit_timer.v $(RTL)/coax_rx.v $(RTL)/coax_rx_ss_detector.v
 regression_memorex_tb: regression_memorex_tb.v $(RTL)/coax_rx.v $(RTL)/coax_rx_ss_detector.v
+regression_johann_tb: regression_johann_tb.v $(RTL)/coax_rx.v $(RTL)/coax_rx_ss_detector.v
 
 test: $(TESTS)
 	./run_tests.sh

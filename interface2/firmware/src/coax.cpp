@@ -246,10 +246,16 @@ void Coax::handleInterrupt()
     }
 }
 
+int Coax::snoopie(uint16_t *buffer, size_t bufferSize, uint8_t *writeIndex)
+{
+    return _spiCoaxTransceiver.snoopie(buffer, bufferSize, writeIndex);
+}
+
 #define COAX_COMMAND_READ_REGISTER 0x2
 #define COAX_COMMAND_WRITE_REGISTER 0x3
 #define COAX_COMMAND_TX 0x4
 #define COAX_COMMAND_RX 0x5
+#define COAX_COMMAND_SNOOPIE 0x6
 #define COAX_COMMAND_RESET 0xff
 
 #define NOP asm volatile("nop\n\t")
@@ -509,6 +515,37 @@ void SPICoaxTransceiver::setRXProtocol(CoaxProtocol protocol)
 void SPICoaxTransceiver::setRXParity(CoaxParity parity)
 {
     writeRegister(COAX_REGISTER_CONTROL, parity == CoaxParity::Even ? COAX_REGISTER_CONTROL_RX_PARITY : 0, COAX_REGISTER_CONTROL_RX_PARITY);
+}
+
+int SPICoaxTransceiver::snoopie(uint16_t *buffer, size_t bufferSize, uint8_t *writeIndex)
+{
+    uint8_t transmitBuffer[2] = { COAX_COMMAND_SNOOPIE };
+    uint8_t receiveBuffer[2];
+
+    ATOMIC_BLOCK_START;
+    LL_GPIO_ResetOutputPin(ICE40_CS_GPIO_Port, ICE40_CS_Pin);
+
+    spiTransfer(transmitBuffer, NULL, 1);
+
+    transmitBuffer[0] = 0x00;
+    transmitBuffer[1] = 0x00;
+
+    spiTransfer(transmitBuffer, receiveBuffer, 1);
+
+    *writeIndex = receiveBuffer[0];
+
+    for (size_t index = 0; index < bufferSize; index++) {
+        spiTransfer(transmitBuffer, receiveBuffer, 2);
+
+        uint16_t value = (receiveBuffer[0] << 8) | receiveBuffer[1];
+
+        buffer[index] = value;
+    }
+
+    LL_GPIO_SetOutputPin(ICE40_CS_GPIO_Port, ICE40_CS_Pin);
+    ATOMIC_BLOCK_END;
+
+    return 0;
 }
 
 void SPICoaxTransceiver::spiTransfer(const uint8_t *transmitBuffer,
