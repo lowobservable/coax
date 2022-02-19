@@ -162,7 +162,8 @@ class SerialInterface(Interface):
                     raise error
 
                 # vvv
-                self.snoopie_report()
+                if not isinstance(error, ReceiveTimeout):
+                    self.snoopie_report()
                 # ^^^
 
                 response = error
