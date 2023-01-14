@@ -8,7 +8,7 @@ import os
 import struct
 from copy import copy
 from contextlib import contextmanager
-from serial import Serial
+from serial import Serial, SerialException
 from sliplib import SlipWrapper, ProtocolError
 
 from .interface import Interface, InterfaceFeature, FrameFormat
@@ -168,7 +168,7 @@ class SerialInterface(Interface):
 @contextmanager
 def open_serial_interface(serial_port, reset=True):
     """Opens serial port and initializes serial attached 3270 coax interface."""
-    with Serial(serial_port, 115200) as serial:
+    with WindowsSafeSerial(serial_port, 115200) as serial:
         serial.reset_input_buffer()
         serial.reset_output_buffer()
 
@@ -298,3 +298,20 @@ class SlipSerial(SlipWrapper):
             raise InterfaceTimeout()
 
         return byte
+
+# Based on workaround detailed in https://github.com/pyserial/pyserial/issues/362
+class WindowsSafeSerial(Serial):
+    def _reconfigure_port(self, *args, **kwargs):
+        try:
+            super()._reconfigure_port(*args, **kwargs)
+        except SerialException as error:
+            if not self._is_windows_open_error(error):
+                raise
+
+    def _is_windows_open_error(self, error):
+        message = str(error)
+
+        if os.name == 'nt' and 'OSError(22, \'The parameter is incorrect.\', None, 87)' in message:
+            return True
+
+        return False
