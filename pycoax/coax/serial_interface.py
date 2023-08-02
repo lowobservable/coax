@@ -11,8 +11,7 @@ from contextlib import contextmanager
 from serial import Serial, SerialException
 from sliplib import SlipWrapper, ProtocolError
 
-from .interface import Interface, InterfaceFeature, FrameFormat
-from .protocol import pack_data_word
+from .interface import Interface, InterfaceFeature, normalize_frame
 from .exceptions import InterfaceError, InterfaceTimeout, ReceiveError, ReceiveTimeout
 
 class SerialInterface(Interface):
@@ -185,55 +184,27 @@ def open_serial_interface(serial_port, reset=True):
         yield interface
 
 def _pack_transmit_receive_message(address, frame, response_length, timeout_milliseconds):
+    # Convert the three frame formats to a simple list of 10-bit words with
+    # a repeat count and offset.
+    (words, repeat_count, repeat_offset) = normalize_frame(address, frame)
+
     message = bytes([0x06])
 
-    repeat_count = 0
-    repeat_offset = 0
-    bytes_ = bytearray()
-
-    if frame[0] == FrameFormat.WORDS:
-        if isinstance(frame[1], tuple):
-            repeat_count = frame[1][1]
-
-            for word in frame[1][0]:
-                bytes_ += struct.pack('<H', word)
-        else:
-            for word in frame[1]:
-                bytes_ += struct.pack('<H', word)
-    elif frame[0] == FrameFormat.WORD_DATA:
-        bytes_ += struct.pack('<H', frame[1])
-
-        if len(frame) > 2:
-            if isinstance(frame[2], tuple):
-                repeat_offset = 1
-                repeat_count = frame[2][1]
-
-                for byte in frame[2][0]:
-                    bytes_ += struct.pack('<H', pack_data_word(byte))
-            else:
-                for byte in frame[2]:
-                    bytes_ += struct.pack('<H', pack_data_word(byte))
-    elif frame[0] == FrameFormat.DATA:
-        if isinstance(frame[1], tuple):
-            repeat_count = frame[1][1]
-
-            for byte in frame[1][0]:
-                bytes_ += struct.pack('<H', pack_data_word(byte))
-        else:
-            for byte in frame[1]:
-                bytes_ += struct.pack('<H', pack_data_word(byte))
-
-    if address is not None:
-        if address < 0 or address > 63:
-            raise ValueError('Address must be between 0 and 63')
-
-        if repeat_count > 0:
-            repeat_offset += 1
-
-        bytes_ = struct.pack('<H', 0x8000 | address) + bytes_
-
+    # NOTE: Although the frame normalization routine may result in a repeat
+    # offset greater than 1 if an addressed WORD_DATA frame has a repeat
+    # count, this WILL fail to be packed below as it will overflow the
+    # unsigned short field here. Today, oec does not use a repeat with an
+    # addressed WORD_DATA frame as the "jumbo write" function will always
+    # expand addressed frames.
     message += struct.pack('>H', (repeat_offset << 15) | repeat_count)
-    message += bytes_
+
+    # Set the 3299 mode flag.
+    if address is not None:
+        words[0] |= 0x8000
+
+    for word in words:
+        message += struct.pack('<H', word)
+
     message += struct.pack('>HH', response_length, timeout_milliseconds)
 
     return message

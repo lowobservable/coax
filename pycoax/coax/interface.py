@@ -5,6 +5,7 @@ coax.interface
 
 from enum import Enum
 
+from .protocol import FrameFormat, pack_data_word
 from .exceptions import ProtocolError
 
 class Interface:
@@ -50,12 +51,49 @@ class InterfaceFeature(Enum):
 
     PROTOCOL_3299 = 0x10
 
-class FrameFormat(Enum):
-    """3270 coax frame format."""
+def normalize_frame(address, frame):
+    """Convert a coax frame into words, repeat count and offset."""
+    words = []
 
-    WORDS = 1 # 10-bit words
-    WORD_DATA = 2 # 10-bit word, 8-bit data words
-    DATA = 4 # 8-bit data words
+    repeat_count = 0
+    repeat_offset = 0
+
+    if frame[0] == FrameFormat.WORDS:
+        if isinstance(frame[1], tuple):
+            repeat_count = frame[1][1]
+
+            words += frame[1][0]
+        else:
+            words += frame[1]
+    elif frame[0] == FrameFormat.WORD_DATA:
+        words.append(frame[1])
+
+        if len(frame) > 2:
+            if isinstance(frame[2], tuple):
+                repeat_offset = 1
+                repeat_count = frame[2][1]
+
+                words += [pack_data_word(byte) for byte in frame[2][0]]
+            else:
+                words += [pack_data_word(byte) for byte in frame[2]]
+    elif frame[0] == FrameFormat.DATA:
+        if isinstance(frame[1], tuple):
+            repeat_count = frame[1][1]
+
+            words += [pack_data_word(byte) for byte in frame[1][0]]
+        else:
+            words += [pack_data_word(byte) for byte in frame[1]]
+
+    if address is not None:
+        if address < 0 or address > 63:
+            raise ValueError('Address must be between 0 and 63')
+
+        words.insert(0, address)
+
+        if repeat_count > 0:
+            repeat_offset += 1
+
+    return (words, repeat_count, repeat_offset)
 
 def _is_command(command):
     return hasattr(command, 'pack_outbound_frame') and hasattr(command, 'unpack_inbound_frame')

@@ -5,9 +5,15 @@ coax.protocol
 
 from enum import Enum
 
-from .interface import FrameFormat
 from .parity import odd_parity
 from .exceptions import ProtocolError
+
+class FrameFormat(Enum):
+    """3270 coax frame format."""
+
+    WORDS = 1 # 10-bit words
+    WORD_DATA = 2 # 10-bit word, 8-bit data words
+    DATA = 4 # 8-bit data words
 
 class Command(Enum):
     """Terminal command."""

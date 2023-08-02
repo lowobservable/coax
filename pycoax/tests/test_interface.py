@@ -3,8 +3,8 @@ from unittest.mock import Mock
 
 import context
 
-from coax.interface import Interface, FrameFormat
-from coax.protocol import ReadAddressCounterHi, ReadAddressCounterLo
+from coax.interface import Interface, normalize_frame
+from coax.protocol import FrameFormat, ReadAddressCounterHi, ReadAddressCounterLo
 from coax.exceptions import InterfaceError, ReceiveTimeout, ProtocolError
 
 class InterfaceExecuteTestCase(unittest.TestCase):
@@ -152,6 +152,151 @@ class InterfaceExecuteTestCase(unittest.TestCase):
 
         self.assertEqual(response[0], 0x02)
         self.assertIsInstance(response[1], ProtocolError)
+
+class NormalizeFrameTestCase(unittest.TestCase):
+    def test_words_with_no_address_no_repeat(self):
+        # Arrange
+        frame = (FrameFormat.WORDS, [0b000_01100_01, 0b10101000_00, 0b10100001_00, 0b10101100_10])
+
+        # Act
+        (words, repeat_count, repeat_offset) = normalize_frame(None, frame)
+
+        # Assert
+        self.assertEqual(words, [0b000_01100_01, 0b10101000_00, 0b10100001_00, 0b10101100_10])
+        self.assertEqual(repeat_count, 0)
+        self.assertEqual(repeat_offset, 0)
+
+    def test_words_with_no_address_repeat(self):
+        # Arrange
+        frame = (FrameFormat.WORDS, ([0b10101000_00, 0b10100001_00, 0b10101100_10], 9))
+
+        # Act
+        (words, repeat_count, repeat_offset) = normalize_frame(None, frame)
+
+        # Assert
+        self.assertEqual(words, [0b10101000_00, 0b10100001_00, 0b10101100_10])
+        self.assertEqual(repeat_count, 9)
+        self.assertEqual(repeat_offset, 0)
+
+    def test_words_with_address_no_repeat(self):
+        # Arrange
+        frame = (FrameFormat.WORDS, [0b000_01100_01, 0b10101000_00, 0b10100001_00, 0b10101100_10])
+
+        # Act
+        (words, repeat_count, repeat_offset) = normalize_frame(0b111000, frame)
+
+        # Assert
+        self.assertEqual(words, [0b0000_111000, 0b000_01100_01, 0b10101000_00, 0b10100001_00, 0b10101100_10])
+        self.assertEqual(repeat_count, 0)
+        self.assertEqual(repeat_offset, 0)
+
+    def test_words_with_address_repeat(self):
+        # Arrange
+        frame = (FrameFormat.WORDS, ([0b10101000_00, 0b10100001_00, 0b10101100_10], 9))
+
+        # Act
+        (words, repeat_count, repeat_offset) = normalize_frame(0b111000, frame)
+
+        # Assert
+        self.assertEqual(words, [0b0000_111000, 0b10101000_00, 0b10100001_00, 0b10101100_10])
+        self.assertEqual(repeat_count, 9)
+        self.assertEqual(repeat_offset, 1)
+
+    def test_word_data_with_no_address_no_repeat(self):
+        # Arrange
+        frame = (FrameFormat.WORD_DATA, 0b000_01100_01, [0xa8, 0xa1, 0xac])
+
+        # Act
+        (words, repeat_count, repeat_offset) = normalize_frame(None, frame)
+
+        # Assert
+        self.assertEqual(words, [0b000_01100_01, 0b10101000_00, 0b10100001_00, 0b10101100_10])
+        self.assertEqual(repeat_count, 0)
+        self.assertEqual(repeat_offset, 0)
+
+    def test_word_data_with_no_address_repeat(self):
+        # Arrange
+        frame = (FrameFormat.WORD_DATA, 0b000_01100_01, ([0xa8, 0xa1, 0xac], 9))
+
+        # Act
+        (words, repeat_count, repeat_offset) = normalize_frame(None, frame)
+
+        # Assert
+        self.assertEqual(words, [0b000_01100_01, 0b10101000_00, 0b10100001_00, 0b10101100_10])
+        self.assertEqual(repeat_count, 9)
+        self.assertEqual(repeat_offset, 1)
+
+    def test_word_data_with_address_no_repeat(self):
+        # Arrange
+        frame = (FrameFormat.WORD_DATA, 0b000_01100_01, [0xa8, 0xa1, 0xac])
+
+        # Act
+        (words, repeat_count, repeat_offset) = normalize_frame(0b111000, frame)
+
+        # Assert
+        self.assertEqual(words, [0b0000_111000, 0b000_01100_01, 0b10101000_00, 0b10100001_00, 0b10101100_10])
+        self.assertEqual(repeat_count, 0)
+        self.assertEqual(repeat_offset, 0)
+
+    def test_word_data_with_address_repeat(self):
+        # Arrange
+        frame = (FrameFormat.WORD_DATA, 0b000_01100_01, ([0xa8, 0xa1, 0xac], 9))
+
+        # Act
+        (words, repeat_count, repeat_offset) = normalize_frame(0b111000, frame)
+
+        # Assert
+        self.assertEqual(words, [0b0000_111000, 0b000_01100_01, 0b10101000_00, 0b10100001_00, 0b10101100_10])
+        self.assertEqual(repeat_count, 9)
+        self.assertEqual(repeat_offset, 2)
+
+    def test_data_with_no_address_no_repeat(self):
+        # Arrange
+        frame = (FrameFormat.DATA, [0xa8, 0xa1, 0xac])
+
+        # Act
+        (words, repeat_count, repeat_offset) = normalize_frame(None, frame)
+
+        # Assert
+        self.assertEqual(words, [0b10101000_00, 0b10100001_00, 0b10101100_10])
+        self.assertEqual(repeat_count, 0)
+        self.assertEqual(repeat_offset, 0)
+
+    def test_data_with_no_address_repeat(self):
+        # Arrange
+        frame = (FrameFormat.DATA, ([0xa8, 0xa1, 0xac], 9))
+
+        # Act
+        (words, repeat_count, repeat_offset) = normalize_frame(None, frame)
+
+        # Assert
+        self.assertEqual(words, [0b10101000_00, 0b10100001_00, 0b10101100_10])
+        self.assertEqual(repeat_count, 9)
+        self.assertEqual(repeat_offset, 0)
+
+    def test_data_with_address_no_repeat(self):
+        # Arrange
+        frame = (FrameFormat.DATA, [0xa8, 0xa1, 0xac])
+
+        # Act
+        (words, repeat_count, repeat_offset) = normalize_frame(0b111000, frame)
+
+        # Assert
+        self.assertEqual(words, [0b0000_111000, 0b10101000_00, 0b10100001_00, 0b10101100_10])
+        self.assertEqual(repeat_count, 0)
+        self.assertEqual(repeat_offset, 0)
+
+    def test_data_with_address_repeat(self):
+        # Arrange
+        frame = (FrameFormat.DATA, ([0xa8, 0xa1, 0xac], 9))
+
+        # Act
+        (words, repeat_count, repeat_offset) = normalize_frame(0b111000, frame)
+
+        # Assert
+        self.assertEqual(words, [0b0000_111000, 0b10101000_00, 0b10100001_00, 0b10101100_10])
+        self.assertEqual(repeat_count, 9)
+        self.assertEqual(repeat_offset, 1)
 
 if __name__ == '__main__':
     unittest.main()
