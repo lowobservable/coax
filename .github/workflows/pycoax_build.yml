@@ -8,30 +8,38 @@ on:
 
 jobs:
   build:
+    name: Build
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: pycoax
-    name: Build
+
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
       - name: Set up Python 3.8
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.8
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pylint build
           pip install -r requirements.txt
+
       - name: Run linter
         run: pylint -E coax
+
       - name: Run unit tests
         run: ./run_unit_tests.sh
+
       - name: Build packages
         run: python -m build
+
       - name: Attach packages
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: dist
           path: pycoax/dist/

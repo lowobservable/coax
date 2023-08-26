@@ -20,12 +20,16 @@ resource "aws_ecr_repository" "icecube2" {
 
 resource "aws_s3_bucket" "cache" {
   bucket_prefix = "coax"
-  acl           = "private"
 
   tags = {
     project     = "coax"
     description = "Cached bitstreams for https://github.com/lowobservable/coax"
   }
+}
+
+resource "aws_s3_bucket_acl" "cache" {
+  bucket = aws_s3_bucket.cache.id
+  acl    = "private"
 }
 
 resource "aws_s3_bucket_policy" "cache" {
@@ -102,14 +106,14 @@ data "aws_iam_policy_document" "github_actions_access" {
   }
 }
 
-resource "github_actions_secret" "aws_account_id" {
-  repository      = data.github_repository.coax.name
-  secret_name     = "AWS_ACCOUNT_ID"
-  plaintext_value = data.aws_caller_identity.current.account_id
-}
-
 resource "github_actions_secret" "aws_iam_role" {
   repository      = data.github_repository.coax.name
   secret_name     = "AWS_IAM_ROLE"
   plaintext_value = aws_iam_role.github_actions.arn
+}
+
+resource "github_actions_variable" "bitstream_cache_bucket" {
+  repository    = data.github_repository.coax.name
+  variable_name = "BITSTREAM_CACHE_BUCKET"
+  value         = aws_s3_bucket.cache.id
 }
