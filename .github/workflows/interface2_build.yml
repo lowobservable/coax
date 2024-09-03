@@ -140,7 +140,7 @@ jobs:
           pip install platformio
 
       - name: Download bitstream
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: fpga_bitstream
           path: interface2/fpga/rtl
