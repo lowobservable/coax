@@ -21,7 +21,7 @@ jobs:
         working-directory: interface2/fpga
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install Icarus Verilog
         run: |
@@ -41,14 +41,14 @@ jobs:
         working-directory: interface2/fpga
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           # All history is required to determine the bitstream source SHA, otherwise
           # it may be unnecessarily rebuilt.
           fetch-depth: 0
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
           aws-region: us-east-1
@@ -74,7 +74,7 @@ jobs:
       - name: Login to AWS ECR
         if: env.BITSTREAM_CACHE_EXISTS == 'false'
         id: aws_ecr_login
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
         with:
           mask-password: 'true'
 
@@ -110,7 +110,7 @@ jobs:
           rm cache.zip
 
       - name: Attach bitstream
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fpga_bitstream
           path: |
@@ -127,10 +127,10 @@ jobs:
         working-directory: interface2/firmware
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python 3.8
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.8
 
@@ -140,7 +140,7 @@ jobs:
           pip install platformio
 
       - name: Download bitstream
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: fpga_bitstream
           path: interface2/fpga/rtl
@@ -149,7 +149,7 @@ jobs:
         run: pio run
 
       - name: Attach firmware
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: firmware
           path: interface2/firmware/.pio/build/default/firmware.bin
