@@ -61,4 +61,4 @@ with open_example_serial_interface() as interface:
 
     interface.execute([LoadAddressCounterHi(0), LoadAddressCounterLo(79)])
 
-    interface.execute(WriteData(bytes[0xff]))
+    interface.execute(WriteData(bytes([0xff])))
