@@ -9,4 +9,5 @@ with open_example_serial_interface() as interface:
 
     terminal_id = interface.execute(ReadTerminalId())
 
+    print('{0:02X}'.format(terminal_id.value))
     print(terminal_id)

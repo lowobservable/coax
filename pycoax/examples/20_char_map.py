@@ -56,3 +56,9 @@ with open_example_serial_interface() as interface:
     buffer = bytes(range(0xc0, 0xff + 1))
 
     interface.execute(WriteData(buffer))
+
+    print('xxx')
+
+    interface.execute([LoadAddressCounterHi(0), LoadAddressCounterLo(79)])
+
+    interface.execute(WriteData(bytes[0xff]))
